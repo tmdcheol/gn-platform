@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: api
+  # DB(PostgreSQL) 미연결 상태에서도 기동되도록 DataSource/JPA 자동설정 제외.
+  # 실제 DB 연결 단계에서 아래 exclude를 제거하고 datasource 설정을 추가한다.
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration
+      - org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
