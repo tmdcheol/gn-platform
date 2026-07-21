@@ -91,14 +91,14 @@ class MemberControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/members - 이미 사용 중인 이메일이면 409를 반환한다")
+    @DisplayName("POST /api/members - 이미 사용 중인 이메일이면 400을 반환한다")
     void createDuplicateEmail() throws Exception {
         var request = new MemberRequest("hong@example.com", "다른이름", "password2");
 
         mockMvc.perform(post("/api/members")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
