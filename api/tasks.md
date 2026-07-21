@@ -19,7 +19,13 @@
 ## Repository
 - [x] 9. `com.gn.api.repository.MemberRepository` (JpaRepository, findByEmail/existsByEmail)
 
+## Service
+- [x] 10. `service.ports.in.MemberService` 인터페이스 (findAll/findById/create/update/delete)
+- [x] 11. `service.DefaultMemberService` 구현체 (이메일 중복 검사 포함)
+- [x] 12. `DefaultMemberServiceTest` (Mockito 단위 테스트)
+
 ## 진행 메모
-- 도메인 → Repository 순으로 구현. Service/Controller는 다음 단계.
+- 도메인 → Repository → Service 순으로 구현. Controller는 다음 단계.
+- 서비스는 포트/어댑터 구조: 인터페이스는 `service/ports/in`, 구현체는 `Default` 접두어.
 - 프로젝트 도메인 컨벤션(예시 Reminder)에 맞춰 @Builder + createdAt/updatedAt + update 메서드 형식 채택.
 - Repository JPA 테스트는 생략(파생 쿼리 위주라 별도 검증 불필요).

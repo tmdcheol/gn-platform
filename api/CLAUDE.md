@@ -14,6 +14,8 @@
 - 생성은 **`@Builder` 생성자**. 생성 시 `createdAt = updatedAt = LocalDateTime.now()`.
 - 상태 변경은 `update(...)` 메서드로만 하고 그 안에서 `updatedAt` 갱신.
 - 도메인 단위 테스트 필수(JUnit + AssertJ, Spring 컨텍스트 없이).
+- Repository는 `com.gn.api.repository`, Service는 포트/어댑터 구조: 인터페이스 `service.ports.in`, 구현체는 `service` 에 `Default` 접두어(`@Service @RequiredArgsConstructor @Transactional(readOnly=true)`, 쓰기 메서드에 `@Transactional`).
+- Service 테스트는 Mockito 단위 테스트(`@ExtendWith(MockitoExtension.class)`, `@Mock`/`@InjectMocks`) 필수.
 
 ## Spring Boot 4 주의점 (3.x와 다름)
 - Jackson **3.x** — 패키지가 `com.fasterxml.jackson` 이 아니라 **`tools.jackson`**.
