@@ -29,6 +29,7 @@
 - [x] 14. `MemberController` (GET 목록·단건, POST 생성, PUT 수정, DELETE 삭제)
 - [x] 15. `SecurityConfig` (/api/** permitAll, csrf disable), `GlobalExceptionHandler` (400/404/409)
 - [x] 16. `MemberControllerTest` (@SpringBootTest @AutoConfigureMockMvc @Transactional)
+- [x] 17. `openapi.yml` — 회원 API를 OpenAPI 3.0 표준 형식으로 문서화 (컨트롤러 계약과 일치)
 
 ## 진행 메모
 - 도메인 → Repository → Service → Controller 순으로 구현.

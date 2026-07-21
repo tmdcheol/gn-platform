@@ -19,6 +19,7 @@
 - Controller는 `com.gn.api.controller`, DTO는 `com.gn.api.dto`(`XxxRequest`+Bean Validation / `XxxResponse`+`from()`). 응답은 DTO 직접 반환 + `@ResponseStatus`.
 - Controller 테스트는 `@SpringBootTest @AutoConfigureMockMvc @Transactional` + MockMvc + `tools.jackson.databind.ObjectMapper`.
 - 공통: `global.config.SecurityConfig`(`/api/**` permitAll, csrf disable), `global.error.GlobalExceptionHandler`(검증 400 / `NoSuchElementException` 404 / `IllegalStateException` 409).
+- API 계약은 `api/openapi.yml`(OpenAPI 3.0)에 표준 형식으로 유지한다. 컨트롤러를 바꾸면 openapi.yml 도 함께 갱신해 동기화.
 
 ## Spring Boot 4 주의점 (3.x와 다름)
 - Jackson **3.x** — 패키지가 `com.fasterxml.jackson` 이 아니라 **`tools.jackson`**.
