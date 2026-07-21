@@ -16,6 +16,10 @@
 ## 검증
 - [x] 8. `./gradlew test` 통과
 
+## Repository
+- [x] 9. `com.gn.api.repository.MemberRepository` (JpaRepository, findByEmail/existsByEmail)
+
 ## 진행 메모
-- 도메인만 우선 구현(Builder 패턴). Repository/Service/Controller는 다음 단계.
+- 도메인 → Repository 순으로 구현. Service/Controller는 다음 단계.
 - 프로젝트 도메인 컨벤션(예시 Reminder)에 맞춰 @Builder + createdAt/updatedAt + update 메서드 형식 채택.
+- Repository JPA 테스트는 생략(파생 쿼리 위주라 별도 검증 불필요).
