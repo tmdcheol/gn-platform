@@ -22,7 +22,7 @@
 ## Service
 - [x] 10. `service.ports.in.MemberService` 인터페이스 (findAll/findById/create/update/delete)
 - [x] 11. `service.DefaultMemberService` 구현체 (이메일 중복 검사 포함)
-- [x] 12. `DefaultMemberServiceTest` (Mockito 단위 테스트)
+- [x] 12. `DefaultMemberServiceTest` (@SpringBootTest @Transactional 통합 테스트)
 
 ## 진행 메모
 - 도메인 → Repository → Service 순으로 구현. Controller는 다음 단계.
