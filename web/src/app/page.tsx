@@ -1,3 +1,4 @@
+import Directions from "@/components/Directions";
 import Hero from "@/components/Hero";
 import Reviews from "@/components/Reviews";
 import Services from "@/components/Services";
@@ -10,6 +11,7 @@ export default function Home() {
       <Strengths />
       <Services />
       <Reviews />
+      <Directions />
     </main>
   );
 }
