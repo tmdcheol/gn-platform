@@ -294,7 +294,7 @@ spring:
 ### T-18. `PostController` CRUD
 
 `PostRepository extends JpaRepository<Post, Long>`.
-**서비스 계층은 만들지 마세요.** 이 규모에서는 컨트롤러 → 리포지토리 직접 호출이 맞습니다.
+계층 구성은 `CLAUDE.md`의 "API 아키텍처 — 헥사고날"을 따릅니다.
 
 | Method | Path | 응답 |
 |---|---|---|
