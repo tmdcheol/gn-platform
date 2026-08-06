@@ -1,11 +1,5 @@
 import { apiFetch } from "@/lib/api";
-
-type Contact = {
-  phone: string;
-  callCenter: string[];
-  kakaoOpenChatUrl: string;
-  address: string;
-};
+import type { Contact } from "@/lib/types";
 
 export default async function ContactTestPage() {
   let contact: Contact | null = null;
