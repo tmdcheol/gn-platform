@@ -16,28 +16,34 @@ export default function Header() {
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
+  const linkClass = (href: string) =>
+    isActive(href)
+      ? "rounded-full bg-surface-2 px-4 py-2 text-sm font-semibold"
+      : "rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-foreground";
+
   return (
-    <header className="sticky top-0 z-40 border-b border-black/10 bg-white/90 backdrop-blur dark:border-white/10 dark:bg-black/80">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
+    <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
+      <div className="wrap flex h-16 items-center justify-between">
         <Link
           href="/"
-          className="text-lg font-bold tracking-tight"
           onClick={() => setOpen(false)}
+          className="flex items-center gap-2.5"
         >
-          GN특장
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-sm font-black text-brand-contrast">
+            GN
+          </span>
+          <span className="text-[1.0625rem] font-bold tracking-tight">
+            GN특장
+          </span>
         </Link>
 
-        <nav className="hidden gap-8 text-sm font-medium md:flex">
+        <nav className="hidden items-center gap-1 md:flex">
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               aria-current={isActive(item.href) ? "page" : undefined}
-              className={
-                isActive(item.href)
-                  ? "underline underline-offset-4"
-                  : "text-zinc-600 hover:underline dark:text-zinc-400"
-              }
+              className={linkClass(item.href)}
             >
               {item.label}
             </Link>
@@ -50,21 +56,21 @@ export default function Header() {
           aria-expanded={open}
           aria-controls="mobile-nav"
           onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-black/10 md:hidden dark:border-white/15"
+          className="flex h-10 w-10 items-center justify-center rounded-xl border border-border md:hidden"
         >
           <span className="relative block h-4 w-5">
             <span
-              className={`absolute left-0 block h-0.5 w-5 bg-current transition-transform ${
+              className={`absolute left-0 block h-0.5 w-5 rounded bg-current transition-transform ${
                 open ? "top-1/2 rotate-45" : "top-0"
               }`}
             />
             <span
-              className={`absolute top-1/2 left-0 block h-0.5 w-5 -translate-y-1/2 bg-current transition-opacity ${
+              className={`absolute top-1/2 left-0 block h-0.5 w-5 -translate-y-1/2 rounded bg-current transition-opacity ${
                 open ? "opacity-0" : "opacity-100"
               }`}
             />
             <span
-              className={`absolute left-0 block h-0.5 w-5 bg-current transition-transform ${
+              className={`absolute left-0 block h-0.5 w-5 rounded bg-current transition-transform ${
                 open ? "top-1/2 -rotate-45" : "bottom-0"
               }`}
             />
@@ -72,22 +78,18 @@ export default function Header() {
         </button>
       </div>
 
-      <nav
-        id="mobile-nav"
-        hidden={!open}
-        className="border-t border-black/10 md:hidden dark:border-white/10"
-      >
-        <ul className="mx-auto max-w-6xl px-5 py-2">
+      <nav id="mobile-nav" hidden={!open} className="border-t border-border md:hidden">
+        <ul className="wrap py-2">
           {NAV.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
                 onClick={() => setOpen(false)}
                 aria-current={isActive(item.href) ? "page" : undefined}
-                className={`block py-3 text-base font-medium ${
+                className={`block py-3 text-base ${
                   isActive(item.href)
-                    ? "underline underline-offset-4"
-                    : "text-zinc-600 dark:text-zinc-400"
+                    ? "font-semibold"
+                    : "font-medium text-muted"
                 }`}
               >
                 {item.label}

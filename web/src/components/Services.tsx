@@ -18,22 +18,24 @@ const ICON_PATHS: Record<string, string> = {
 const FALLBACK_ICON_PATH = "M12 3l9 9-9 9-9-9z";
 
 const GRID_CLASS = "mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3";
-const CARD_CLASS =
-  "rounded-2xl border border-black/10 bg-zinc-50 p-8 dark:border-white/10 dark:bg-zinc-900";
+const CARD_CLASS = "card card-hover p-8";
 
 export default function Services() {
   return (
-    <section className="mx-auto max-w-6xl px-5 py-20 md:py-28">
-      <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-        수리 서비스
-      </h2>
-      <p className="mt-4 max-w-xl text-lg text-zinc-600 dark:text-zinc-400">
-        특장 구조물부터 사고 수리까지, 한 곳에서 끝냅니다.
-      </p>
+    <section className="border-y border-border bg-surface-2">
+      <div className="wrap section-y">
+        <span className="eyebrow">수리 서비스</span>
+        <h2 className="headline mt-3 max-w-[20ch]">
+          특장 구조물부터 사고 수리까지, 한 곳에서
+        </h2>
+        <p className="lead mt-5 max-w-lg">
+          여러 공장을 돌지 않아도 됩니다. 진단부터 출고까지 한 번에 끝냅니다.
+        </p>
 
-      <Suspense fallback={<ServiceGridSkeleton />}>
-        <ServiceGrid />
-      </Suspense>
+        <Suspense fallback={<ServiceGridSkeleton />}>
+          <ServiceGrid />
+        </Suspense>
+      </div>
     </section>
   );
 }
@@ -49,7 +51,7 @@ async function ServiceGrid() {
 
   if (!services) {
     return (
-      <p className="mt-12 text-zinc-500">
+      <p className="mt-12 text-muted">
         서비스 목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
       </p>
     );
@@ -59,22 +61,24 @@ async function ServiceGrid() {
     <ul className={GRID_CLASS}>
       {services.map((service) => (
         <li key={service.id} className={CARD_CLASS}>
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-            className="h-8 w-8 text-blue-700 dark:text-blue-400"
-          >
-            <path d={ICON_PATHS[service.icon] ?? FALLBACK_ICON_PATH} />
-          </svg>
-          <h3 className="mt-5 text-xl font-bold">{service.title}</h3>
-          <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-            {service.description}
-          </p>
+          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-soft text-brand">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.6}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+              className="h-6 w-6"
+            >
+              <path d={ICON_PATHS[service.icon] ?? FALLBACK_ICON_PATH} />
+            </svg>
+          </span>
+          <h3 className="mt-6 text-xl font-bold tracking-tight">
+            {service.title}
+          </h3>
+          <p className="mt-2 text-muted">{service.description}</p>
         </li>
       ))}
     </ul>
@@ -86,10 +90,10 @@ function ServiceGridSkeleton() {
     <ul className={GRID_CLASS} aria-hidden>
       {Array.from({ length: 6 }, (_, i) => (
         <li key={i} className={`${CARD_CLASS} animate-pulse`}>
-          <div className="h-8 w-8 rounded bg-black/10 dark:bg-white/10" />
-          <div className="mt-5 h-6 w-1/2 rounded bg-black/10 dark:bg-white/10" />
-          <div className="mt-3 h-4 w-full rounded bg-black/10 dark:bg-white/10" />
-          <div className="mt-2 h-4 w-4/5 rounded bg-black/10 dark:bg-white/10" />
+          <div className="h-12 w-12 rounded-2xl bg-surface-2" />
+          <div className="mt-6 h-6 w-1/2 rounded bg-surface-2" />
+          <div className="mt-3 h-4 w-full rounded bg-surface-2" />
+          <div className="mt-2 h-4 w-4/5 rounded bg-surface-2" />
         </li>
       ))}
     </ul>

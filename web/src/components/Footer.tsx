@@ -1,27 +1,47 @@
+import Link from "next/link";
 import { Suspense } from "react";
 
 import { apiFetch } from "@/lib/api";
 import type { Contact } from "@/lib/types";
 
-const DL_CLASS =
-  "mt-6 grid gap-3 text-zinc-700 sm:grid-cols-3 dark:text-zinc-300";
+const DL_CLASS = "grid gap-6 sm:grid-cols-3";
 
 export default function Footer() {
   return (
-    <footer className="mt-20 border-t border-black/10 bg-zinc-50 dark:border-white/10 dark:bg-zinc-950">
-      <div className="mx-auto max-w-6xl px-5 py-12 text-sm">
-        <p className="text-base font-bold">GN특장</p>
-        <p className="mt-1 text-zinc-600 dark:text-zinc-400">
-          탑차 · 윙바디 · 냉동탑 · 리프트 수리 전문
-        </p>
+    <footer className="border-t border-border bg-background">
+      <div className="wrap py-14 text-sm">
+        <div className="flex flex-col gap-8 border-b border-border pb-10 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-sm font-black text-brand-contrast">
+                GN
+              </span>
+              <span className="text-[1.0625rem] font-bold tracking-tight">
+                GN특장
+              </span>
+            </div>
+            <p className="mt-3 text-muted">
+              탑차 · 윙바디 · 냉동탑 · 리프트 수리 전문
+            </p>
+          </div>
 
-        <Suspense fallback={<FooterContactSkeleton />}>
-          <FooterContact />
-        </Suspense>
+          <nav className="flex gap-6 font-medium">
+            <Link href="/" className="text-muted hover:text-foreground">
+              홈
+            </Link>
+            <Link href="/blog" className="text-muted hover:text-foreground">
+              블로그
+            </Link>
+          </nav>
+        </div>
 
-        <p className="mt-10 text-xs text-zinc-500">
-          © {new Date().getFullYear()} GN특장
-        </p>
+        <div className="py-10">
+          <Suspense fallback={<FooterContactSkeleton />}>
+            <FooterContact />
+          </Suspense>
+        </div>
+
+        <p className="text-xs text-muted">© {new Date().getFullYear()} GN특장</p>
       </div>
     </footer>
   );
@@ -38,7 +58,7 @@ async function FooterContact() {
 
   if (!contact) {
     return (
-      <p className="mt-6 text-zinc-500">
+      <p className="text-muted">
         연락처를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
       </p>
     );
@@ -47,20 +67,33 @@ async function FooterContact() {
   return (
     <dl className={DL_CLASS}>
       <div>
-        <dt className="text-zinc-500 dark:text-zinc-500">주소</dt>
-        <dd className="mt-1">{contact.address}</dd>
+        <dt className="text-xs font-semibold tracking-wide text-muted">주소</dt>
+        <dd className="mt-1.5 font-medium">{contact.address}</dd>
       </div>
       <div>
-        <dt className="text-zinc-500 dark:text-zinc-500">휴대전화</dt>
-        <dd className="mt-1">
-          <a href={`tel:${contact.phone.replace(/-/g, "")}`}>{contact.phone}</a>
+        <dt className="text-xs font-semibold tracking-wide text-muted">
+          휴대전화
+        </dt>
+        <dd className="mt-1.5 font-medium tabular-nums">
+          <a
+            href={`tel:${contact.phone.replace(/-/g, "")}`}
+            className="hover:text-brand"
+          >
+            {contact.phone}
+          </a>
         </dd>
       </div>
       <div>
-        <dt className="text-zinc-500 dark:text-zinc-500">콜센터</dt>
-        <dd className="mt-1 flex flex-wrap gap-x-3">
+        <dt className="text-xs font-semibold tracking-wide text-muted">
+          콜센터
+        </dt>
+        <dd className="mt-1.5 flex flex-wrap gap-x-4 font-medium tabular-nums">
           {contact.callCenter.map((number) => (
-            <a key={number} href={`tel:${number.replace(/-/g, "")}`}>
+            <a
+              key={number}
+              href={`tel:${number.replace(/-/g, "")}`}
+              className="hover:text-brand"
+            >
               {number}
             </a>
           ))}
@@ -75,8 +108,8 @@ function FooterContactSkeleton() {
     <div className={`${DL_CLASS} animate-pulse`} aria-hidden>
       {Array.from({ length: 3 }, (_, i) => (
         <div key={i}>
-          <div className="h-4 w-16 rounded bg-black/10 dark:bg-white/10" />
-          <div className="mt-2 h-4 w-40 rounded bg-black/10 dark:bg-white/10" />
+          <div className="h-3 w-14 rounded bg-surface-2" />
+          <div className="mt-2 h-5 w-44 max-w-full rounded bg-surface-2" />
         </div>
       ))}
     </div>
