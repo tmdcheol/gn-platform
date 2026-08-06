@@ -13,7 +13,7 @@ export default async function Footer() {
   return (
     <footer className="mt-20 border-t border-black/10 bg-zinc-50 dark:border-white/10 dark:bg-zinc-950">
       <div className="mx-auto max-w-6xl px-5 py-12 text-sm">
-        <p className="text-base font-bold">광남특장차</p>
+        <p className="text-base font-bold">GN특장</p>
         <p className="mt-1 text-zinc-600 dark:text-zinc-400">
           탑차 · 윙바디 · 냉동탑 · 리프트 수리 전문
         </p>
@@ -50,7 +50,7 @@ export default async function Footer() {
         )}
 
         <p className="mt-10 text-xs text-zinc-500">
-          © {new Date().getFullYear()} 광남특장차
+          © {new Date().getFullYear()} GN특장
         </p>
       </div>
     </footer>

@@ -19,7 +19,7 @@ export default function Header() {
           className="text-lg font-bold tracking-tight"
           onClick={() => setOpen(false)}
         >
-          광남특장차
+          GN특장
         </Link>
 
         <nav className="hidden gap-8 text-sm font-medium md:flex">
