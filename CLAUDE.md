@@ -27,6 +27,8 @@
 도메인은 스프링 없는 순수 단위 테스트, 서비스는 `@SpringBootTest` + `@Transactional`, 컨트롤러는 `@SpringBootTest` + `@AutoConfigureMockMvc`. `@DisplayName`은 한글, 단언은 AssertJ.
 단일 테스트는 `cd api && ./gradlew test --tests 'com.gnplatform.api.PostControllerTest'`.
 
+Spring Boot 4에서 패키지가 옮겨졌습니다. `AutoConfigureMockMvc`는 `org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc`에서 임포트하세요 (`...boot.test.autoconfigure.web.servlet`이 아닙니다).
+
 ## 기타
 
 - 이 Next.js 16은 학습 데이터와 API·규약이 다를 수 있습니다. 애매하면 `web/node_modules/next/dist/docs/`를 먼저 읽으세요. `web/AGENTS.md`의 자동 생성 블록은 지우지 말고 그대로 커밋합니다.
