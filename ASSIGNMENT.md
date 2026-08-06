@@ -34,6 +34,27 @@
 - 티켓마다 커밋하세요. 최소 38커밋이 남습니다.
 - 순서를 바꿔도 되지만, **단계는 순서대로** 가세요 (앞 단계가 뒤 단계의 재료입니다).
 
+### 테스트 코드는 항상 함께 작성합니다 (api)
+
+**`api` 티켓은 테스트 없이 커밋하지 않습니다.** 코드와 같은 커밋에 테스트가 들어갑니다.
+
+- **도메인 테스트는 순수 단위 테스트로.** 스프링 컨텍스트도, JPA도, DB도 쓰지 않습니다.
+  `new`(또는 빌더)로 객체를 만들어 도메인 규칙만 검증합니다.
+- **서비스 테스트는 `@SpringBootTest` + `@Transactional` 통합 테스트로.**
+  실제 리포지토리를 그대로 쓰고, **목(Mock)·`@MockBean`·가짜 구현을 쓰지 마세요.**
+  동작하는 것을 검증해야지, 내가 짠 가짜가 동작하는 것을 검증하면 의미가 없습니다.
+- **컨트롤러 테스트는 `@SpringBootTest` + `@AutoConfigureMockMvc`로** 상태코드·응답 JSON 검증 (요청부터 DB까지 관통).
+- `@DisplayName`은 한글로, 단언은 AssertJ로.
+- **각 티켓의 완료 조건을 그대로 테스트로 옮기세요.** "삭제한 id 조회 시 404"가 완료 조건이면 그걸 검증하는 테스트가 있어야 합니다.
+  `curl`로 눈으로 확인하는 것은 그대로 하되, 테스트가 그것을 대체하는 게 아니라 **고정**합니다.
+
+통합 테스트가 개발용 H2 파일(`api/data/`)을 건드리지 않도록, 테스트는 인메모리 H2를 쓰는
+별도 프로필(`src/test/resources/application-test.yml`)로 돌립니다. (T-17에서 H2 설정을 할 때 같이 만드세요)
+
+> ✅ 모든 api 티켓의 공통 완료 조건: `cd api && ./gradlew test` 가 통과한다
+
+`web`은 테스트 러너를 따로 두지 않고 브라우저 육안 확인으로 갑니다.
+
 ### 진행 현황
 
 | 단계 | 티켓 | 내용 |
@@ -72,14 +93,14 @@ npx create-next-app@latest web
 | Packaging | Jar |
 | Group | `com.gnplatform` |
 | Artifact / Name | `api` |
-| Dependencies | `Spring Web`, `Spring Data JPA`, `H2 Database`, `Validation` |
+| Dependencies | `Spring Web`, `Spring Data JPA`, `H2 Database`, `Validation`, `Lombok` |
 
 터미널로 만들어도 됩니다:
 
 ```bash
 curl https://start.spring.io/starter.zip \
   -d type=gradle-project-kotlin -d language=java -d javaVersion=21 \
-  -d dependencies=web,data-jpa,h2,validation \
+  -d dependencies=web,data-jpa,h2,validation,lombok \
   -d name=api -d artifactId=api -d groupId=com.gnplatform \
   -d packageName=com.gnplatform.api \
   -o api.zip && unzip api.zip -d api && rm api.zip
@@ -141,7 +162,8 @@ app:
 
 ### T-06. `GET /api/contact`
 
-`@RestController` + Java `record`로 응답. **데이터는 코드에 하드코딩합니다.**
+`controller`의 `@RestController` + `dto`의 응답 `record`로 반환. **데이터는 코드에 하드코딩합니다.**
+하드코딩 값은 `service`의 구현 클래스에 상수로 두고, 컨트롤러는 `ports/in`의 서비스 인터페이스만 호출합니다.
 
 ```json
 {
@@ -161,7 +183,7 @@ app:
 
 ### T-07. `GET /api/services`
 
-수리 서비스 목록. 필드: `id`, `title`, `description`, `icon`
+수리 서비스 목록. 응답 필드: `id`, `title`, `description`, `icon` (T-06과 같은 계층 구성)
 내용은 실제 취급 항목으로 — 탑차 수리 / 윙바디 / 냉동탑 / 리프트 / 보험·사고 수리 / 무료 대차 / 전국 픽업 / 전국 견인 중에서 6개 이상.
 
 > ✅ 완료 조건: `curl localhost:8080/api/services` → 6개 이상의 배열
@@ -170,7 +192,7 @@ app:
 
 ### T-08. `GET /api/reviews`
 
-고객 후기 목록. 필드: `author`, `vehicleType`, `rating`, `content`. 샘플 5건.
+고객 후기 목록. 응답 필드: `author`, `vehicleType`, `rating`, `content`. 샘플 5건. (T-06과 같은 계층 구성)
 
 > ✅ 완료 조건: `curl localhost:8080/api/reviews` → 5건 배열
 
@@ -265,7 +287,8 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 ### T-17. `Post` 엔티티 + H2 파일 모드 설정
 
-필드: `id`, `title`, `content`, `author`, `createdAt`, `updatedAt`
+`domain` 패키지에 `Post` 엔티티. 필드: `id`, `title`, `content`, `author`, `createdAt`, `updatedAt`
+Lombok은 `@Getter` + `@Builder` + `@NoArgsConstructor(access = AccessLevel.PROTECTED)`까지만 — **setter 금지**, 수정은 도메인 메서드로 (T-18/T-24의 수정 기능이 이걸 씁니다).
 
 `application.yml`:
 
@@ -291,10 +314,14 @@ spring:
 
 ---
 
-### T-18. `PostController` CRUD
+### T-18. 게시글 CRUD
 
-`PostRepository extends JpaRepository<Post, Long>`.
-계층 구성은 `CLAUDE.md`의 "API 아키텍처 — 헥사고날"을 따릅니다.
+계층 구성은 `CLAUDE.md`의 "API 아키텍처"를 따릅니다.
+
+- `service/ports/in/PostService` 인터페이스 + `service/DefaultPostService` 구현
+- `repository/PostRepository extends JpaRepository<Post, Long>`
+- `controller/PostController`, 요청/응답은 `dto`의 `record`
+- 컨트롤러는 리포지토리를 직접 참조하지 않고 `PostService`만 호출합니다.
 
 | Method | Path | 응답 |
 |---|---|---|
@@ -310,8 +337,8 @@ spring:
 
 ### T-19. 검증 + 404 예외 처리
 
-- `@Valid` + `@NotBlank` → 제목/본문이 비면 **400**
-- 404는 `@ResponseStatus(HttpStatus.NOT_FOUND)`를 붙인 커스텀 예외로
+- `dto`의 요청 `record`에 `@Valid` + `@NotBlank` → 제목/본문이 비면 **400**
+- 404는 커스텀 예외로. HTTP 매핑은 `controller/GlobalExceptionHandler`(`@RestControllerAdvice`)에서 모아 처리합니다.
 
 > ✅ 완료 조건: 빈 제목으로 POST → 400 / 없는 id 조회 → 500이 아니라 404
 
@@ -319,7 +346,7 @@ spring:
 
 ### T-20. 샘플 글 시딩
 
-`CommandLineRunner`로 **글이 0건일 때만** 샘플 **12건** 삽입.
+`config/DataInitializer`(`CommandLineRunner`)로 **글이 0건일 때만** 샘플 **12건** 삽입.
 (페이지네이션을 눈으로 확인하려면 2페이지 이상 필요합니다)
 
 > ✅ 완료 조건: 서버를 두 번 재시작해도 글이 12건 그대로 (24건으로 늘어나지 않음)
@@ -376,8 +403,9 @@ spring:
 
 ### T-26. 목록 API 페이지네이션
 
-컨트롤러가 `Pageable`을 받고 `Page<Post>`를 반환하면 끝입니다.
-응답에 `content`, `totalPages`, `number`가 자동으로 들어갑니다.
+컨트롤러가 `Pageable`을 받아 서비스에 넘기고, 서비스가 `Page<Post>`를 반환하면 끝입니다.
+다만 **엔티티를 그대로 내보내지 말고** `dto`의 응답 `record`로 매핑하세요 (`page.map(PostResponse::from)`).
+응답에 `content`, `totalPages`, `number`가 그대로 들어갑니다.
 
 > ✅ 완료 조건: `curl 'localhost:8080/api/posts?page=1&size=6'` → 7~12번째 글, `totalPages: 2`
 
@@ -385,8 +413,9 @@ spring:
 
 ### T-27. 목록 API 검색
 
+`PostService`에 `q`를 포함한 조회 메서드를 하나 두고, `DefaultPostService`에서
 `q`가 있으면 `findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(q, q, pageable)`,
-없으면 `findAll(pageable)`.
+없으면 `findAll(pageable)`로 분기합니다.
 
 > ✅ 완료 조건: `curl 'localhost:8080/api/posts?q=냉동'` → 해당 글만
 

@@ -1,8 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-특장차(탑차/윙바디/냉동탑/리프트) 수리 전문점의 실서비스 웹사이트. `web/` = Next.js 16 (App Router, Tailwind v4), `api/` = Spring Boot 4 (Java 21, JPA, H2). 별도 워크스페이스 도구 없이 각 디렉터리에서 독립 실행하며, 웹이 동작하려면 두 서버가 모두 떠 있어야 합니다.
+특장차(탑차/윙바디/냉동탑/리프트) 수리 전문점의 **실서비스** 웹사이트. `web/`(Next.js 16) + `api/`(Spring Boot 4)를 각 디렉터리에서 독립 실행하며, 웹이 동작하려면 두 서버가 다 떠 있어야 합니다.
 
 ## 스펙은 ASSIGNMENT.md
 
@@ -14,27 +12,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - 웹 폼은 `'use client'` + `useState`. **폼 라이브러리 금지.** 라이트박스 등 UI도 **라이브러리 없이 직접 구현.**
 - 설정 파일은 전부 YAML. `application.properties`를 만들지 마세요.
-- 하드코딩 금지: 연락처는 `/api/contact`에서만, API 주소는 `NEXT_PUBLIC_API_BASE_URL` + `web/src/lib/api.ts` 래퍼로만, CORS 오리진은 `application.yml`에서만. **유일한 예외는 T-33의 fallback 연락처** — API가 죽어도 전화·카톡 버튼은 동작해야 합니다.
+- 하드코딩 금지: 연락처는 `/api/contact`에서만, API 주소는 `NEXT_PUBLIC_API_BASE_URL` + `web/src/lib/api.ts` 래퍼로만, CORS 오리진은 `application.yml`에서만. **유일한 예외는 T-33의 fallback 연락처.**
 - 목록 상태(`q`, `page`)는 URL 쿼리스트링으로 관리. 로딩·에러 상태는 항상 렌더링합니다.
 
-## API 아키텍처 — 헥사고날
+## API 컨벤션
 
-가독성을 위해 API는 헥사고날(포트 & 어댑터) 구조로 갑니다. `com.gnplatform.api.<기능>` 아래로 계층을 나눕니다:
+`com.gnplatform.api` 아래 계층별 패키지: `domain`(JPA 엔티티, 상태 변경 로직은 서비스가 아니라 여기에) · `service/ports/in`(인터페이스) · `service`(구현, **`Default` 접두사**) · `repository` · `controller`(+`GlobalExceptionHandler`) · `dto`(요청/응답 `record`) · `config`.
 
-- `domain` — 순수 도메인 모델과 규칙. 스프링·JPA 애너테이션 없음.
-- `application` — 유스케이스 구현 + 아웃바운드 **포트 인터페이스** 선언. 의존 방향은 항상 안쪽(도메인)으로만.
-- `adapter/in/web` — `@RestController`, 요청/응답 `record`. 도메인 모델을 그대로 노출하지 말고 여기서 변환합니다.
-- `adapter/out/persistence` — JPA 엔티티와 `JpaRepository`, 그리고 application의 포트를 구현하는 어댑터. JPA 엔티티는 이 패키지 밖으로 나가지 않습니다.
+컨트롤러는 리포지토리가 아니라 서비스 인터페이스만 호출하고, 엔티티를 그대로 노출하지 않습니다.
 
-컨트롤러는 리포지토리를 직접 참조하지 않고 유스케이스만 호출합니다.
+엔티티는 Lombok으로 `@Getter` + `@Builder` + `@NoArgsConstructor(access = AccessLevel.PROTECTED)`. **setter는 만들지 않고**, 상태 변경은 의미 있는 이름의 도메인 메서드로 합니다. `dto`의 `record`에는 Lombok을 쓰지 않습니다.
 
-## 명령어
-
-`npm run dev|build|lint` (web), `./gradlew bootRun|test` (api). 단일 테스트:
-
-```bash
-cd api && ./gradlew test --tests 'com.gnplatform.api.PostControllerTest'
-```
+**테스트는 코드와 같은 커밋에. 목(Mock)·`@MockBean` 금지.**
+도메인은 스프링 없는 순수 단위 테스트, 서비스는 `@SpringBootTest` + `@Transactional`, 컨트롤러는 `@SpringBootTest` + `@AutoConfigureMockMvc`. `@DisplayName`은 한글, 단언은 AssertJ.
+단일 테스트는 `cd api && ./gradlew test --tests 'com.gnplatform.api.PostControllerTest'`.
 
 ## 기타
 
