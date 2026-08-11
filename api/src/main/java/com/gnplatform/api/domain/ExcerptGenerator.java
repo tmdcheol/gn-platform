@@ -14,10 +14,6 @@ public final class ExcerptGenerator {
         if (excerpt != null && !excerpt.isBlank()) {
             return excerpt;
         }
-        if (content == null) {
-            return "";
-        }
-
         String plain = content.strip();
         return plain.length() <= MAX_LENGTH ? plain : plain.substring(0, MAX_LENGTH);
     }
