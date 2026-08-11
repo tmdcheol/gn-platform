@@ -6,12 +6,12 @@ import Strengths from "@/components/Strengths";
 
 export default function Home() {
   return (
-    <main>
+    <>
       <Hero />
       <Strengths />
       <Services />
       <Reviews />
       <Directions />
-    </main>
+    </>
   );
 }

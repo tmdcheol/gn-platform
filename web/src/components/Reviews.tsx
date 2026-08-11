@@ -1,9 +1,9 @@
 import { Suspense } from "react";
 
-import { apiFetch } from "@/lib/api";
-import type { Review } from "@/lib/types";
+import DataError from "@/components/DataError";
+import { getReviews } from "@/lib/data";
 
-// 모바일은 가로 스크롤 스냅, md 이상은 3열 그리드.
+// 모바일은 가로 스크롤 스냅, md 이상은 그리드.
 // -mx-5 px-5: 스크롤 영역을 섹션 패딩 밖까지 넓히되 첫/마지막 카드에 여백을 남깁니다.
 const LIST_CLASS =
   "mt-12 -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-4 md:mx-0 md:grid md:grid-cols-2 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-3";
@@ -12,16 +12,14 @@ const LIST_CLASS =
 const CARD_CLASS =
   "card relative flex w-[85%] shrink-0 snap-start flex-col p-8 sm:w-[60%] md:w-auto";
 
+const MAX_RATING = 5;
+
 export default function Reviews() {
   return (
     <section className="wrap section-y">
       <span className="eyebrow">고객 후기</span>
-      <h2 className="headline mt-3 max-w-[18ch]">
-        맡겨 보신 분들의 이야기
-      </h2>
-      <p className="lead mt-5 max-w-lg">
-        수리 후 직접 남겨 주신 후기입니다.
-      </p>
+      <h2 className="headline mt-3 max-w-[18ch]">맡겨 보신 분들의 이야기</h2>
+      <p className="lead mt-5 max-w-lg">수리 후 직접 남겨 주신 후기입니다.</p>
 
       <Suspense fallback={<ReviewListSkeleton />}>
         <ReviewList />
@@ -31,29 +29,20 @@ export default function Reviews() {
 }
 
 async function ReviewList() {
-  let reviews: Review[] | null = null;
-
-  try {
-    reviews = await apiFetch<Review[]>("/api/reviews");
-  } catch {
-    reviews = null;
-  }
+  const reviews = await getReviews();
 
   if (!reviews) {
-    return (
-      <p className="mt-12 text-muted">
-        후기를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-      </p>
-    );
+    return <DataError>후기를 불러오지 못했습니다.</DataError>;
   }
 
   return (
     <ul className={LIST_CLASS}>
+      {/* 응답에 id가 없어 인덱스를 키로 씁니다(정적 목록). */}
       {reviews.map((review, index) => (
         <li key={index} className={CARD_CLASS}>
           <p className="text-lg tracking-tight">
             <span aria-hidden>
-              {Array.from({ length: 5 }, (_, star) => (
+              {Array.from({ length: MAX_RATING }, (_, star) => (
                 <span
                   key={star}
                   className={star < review.rating ? "text-brand" : "text-border"}
@@ -62,7 +51,9 @@ async function ReviewList() {
                 </span>
               ))}
             </span>
-            <span className="sr-only">5점 만점에 {review.rating}점</span>
+            <span className="sr-only">
+              {MAX_RATING}점 만점에 {review.rating}점
+            </span>
           </p>
 
           <p className="mt-4 flex-1 text-[1.0625rem] leading-relaxed">
@@ -70,7 +61,10 @@ async function ReviewList() {
           </p>
 
           <div className="mt-7 flex items-center gap-3 border-t border-border pt-5">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand">
+            <span
+              aria-hidden
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-soft text-sm font-bold text-brand"
+            >
               {review.author.slice(0, 1)}
             </span>
             <span className="text-sm text-muted">

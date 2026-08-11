@@ -1,15 +1,10 @@
-import { apiFetch } from "@/lib/api";
-import type { Contact } from "@/lib/types";
+import { getContact } from "@/lib/data";
+import { telHref } from "@/lib/phone";
 
 export default async function MobileCtaBar() {
-  let contact: Contact | null = null;
+  const contact = await getContact();
 
-  try {
-    contact = await apiFetch<Contact>("/api/contact");
-  } catch {
-    contact = null;
-  }
-
+  // TODO(T-33): API 실패 시에도 fallback 연락처로 버튼이 남아 있어야 합니다.
   if (!contact) return null;
 
   return (
@@ -18,10 +13,7 @@ export default async function MobileCtaBar() {
       className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-background/95 backdrop-blur-md md:hidden"
     >
       <div className="grid grid-cols-2 gap-2 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
-        <a
-          href={`tel:${contact.phone.replace(/-/g, "")}`}
-          className="btn btn-primary w-full"
-        >
+        <a href={telHref(contact.phone)} className="btn btn-primary w-full">
           전화 상담
         </a>
         <a

@@ -4,46 +4,42 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
-const NAV = [
-  { href: "/", label: "홈" },
-  { href: "/blog", label: "블로그" },
-];
+import BrandMark from "@/components/BrandMark";
+import { NAV_ITEMS } from "@/lib/nav";
 
 export default function Header() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
 
+  // 경로가 바뀌면 모바일 메뉴를 닫습니다(뒤로가기로 이동한 경우 포함).
+  // effect가 아니라 렌더 중 조정 — React가 권장하는 파생 상태 갱신 방식입니다.
+  const [renderedPath, setRenderedPath] = useState(pathname);
+  if (renderedPath !== pathname) {
+    setRenderedPath(pathname);
+    setOpen(false);
+  }
+
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
-
-  const linkClass = (href: string) =>
-    isActive(href)
-      ? "rounded-full bg-surface-2 px-4 py-2 text-sm font-semibold"
-      : "rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-foreground";
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-md">
       <div className="wrap flex h-16 items-center justify-between">
-        <Link
-          href="/"
-          onClick={() => setOpen(false)}
-          className="flex items-center gap-2.5"
-        >
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-sm font-black text-brand-contrast">
-            GN
-          </span>
-          <span className="text-[1.0625rem] font-bold tracking-tight">
-            GN특장
-          </span>
+        <Link href="/" aria-label="GN특장 홈">
+          <BrandMark />
         </Link>
 
-        <nav className="hidden items-center gap-1 md:flex">
-          {NAV.map((item) => (
+        <nav aria-label="주요" className="hidden items-center gap-1 md:flex">
+          {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               aria-current={isActive(item.href) ? "page" : undefined}
-              className={linkClass(item.href)}
+              className={
+                isActive(item.href)
+                  ? "rounded-full bg-surface-2 px-4 py-2 text-sm font-semibold"
+                  : "rounded-full px-4 py-2 text-sm font-medium text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+              }
             >
               {item.label}
             </Link>
@@ -58,7 +54,7 @@ export default function Header() {
           onClick={() => setOpen((v) => !v)}
           className="flex h-10 w-10 items-center justify-center rounded-xl border border-border md:hidden"
         >
-          <span className="relative block h-4 w-5">
+          <span aria-hidden className="relative block h-4 w-5">
             <span
               className={`absolute left-0 block h-0.5 w-5 rounded bg-current transition-transform ${
                 open ? "top-1/2 rotate-45" : "top-0"
@@ -78,18 +74,20 @@ export default function Header() {
         </button>
       </div>
 
-      <nav id="mobile-nav" hidden={!open} className="border-t border-border md:hidden">
+      <nav
+        id="mobile-nav"
+        aria-label="모바일"
+        hidden={!open}
+        className="border-t border-border md:hidden"
+      >
         <ul className="wrap py-2">
-          {NAV.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <li key={item.href}>
               <Link
                 href={item.href}
-                onClick={() => setOpen(false)}
                 aria-current={isActive(item.href) ? "page" : undefined}
                 className={`block py-3 text-base ${
-                  isActive(item.href)
-                    ? "font-semibold"
-                    : "font-medium text-muted"
+                  isActive(item.href) ? "font-semibold" : "font-medium text-muted"
                 }`}
               >
                 {item.label}

@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 
-import { apiFetch } from "@/lib/api";
-import type { Contact } from "@/lib/types";
+import DataError from "@/components/DataError";
+import Icon from "@/components/Icon";
+import { getContact } from "@/lib/data";
+import { telHref } from "@/lib/phone";
 
 // 지도 검색은 도로명 주소만 넘깁니다. 괄호 지번과 "공장"이 섞이면 검색이 0건으로 뜹니다.
 function toMapQuery(address: string) {
@@ -34,20 +36,10 @@ export default function Directions() {
 }
 
 async function DirectionsBody() {
-  let contact: Contact | null = null;
-
-  try {
-    contact = await apiFetch<Contact>("/api/contact");
-  } catch {
-    contact = null;
-  }
+  const contact = await getContact();
 
   if (!contact) {
-    return (
-      <p className="mt-12 text-muted">
-        오시는 길 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-      </p>
-    );
+    return <DataError>오시는 길 정보를 불러오지 못했습니다.</DataError>;
   }
 
   const mapQuery = encodeURIComponent(toMapQuery(contact.address));
@@ -66,7 +58,7 @@ async function DirectionsBody() {
             <dt className="text-sm font-semibold text-muted">휴대전화</dt>
             <dd className="mt-1.5">
               <a
-                href={`tel:${contact.phone.replace(/-/g, "")}`}
+                href={telHref(contact.phone)}
                 className="text-lg font-bold tracking-tight tabular-nums hover:text-brand"
               >
                 {contact.phone}
@@ -79,7 +71,7 @@ async function DirectionsBody() {
               {contact.callCenter.map((number) => (
                 <a
                   key={number}
-                  href={`tel:${number.replace(/-/g, "")}`}
+                  href={telHref(number)}
                   className="text-lg font-bold tracking-tight tabular-nums hover:text-brand"
                 >
                   {number}
@@ -102,19 +94,7 @@ async function DirectionsBody() {
       <div className="card hero-canvas flex flex-col justify-between overflow-hidden p-8 md:p-10">
         <div className="flex items-start gap-3">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-brand-contrast">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.8}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden
-              className="h-6 w-6"
-            >
-              <path d="M12 21s7-5.5 7-11a7 7 0 10-14 0c0 5.5 7 11 7 11z" />
-              <circle cx="12" cy="10" r="2.5" />
-            </svg>
+            <Icon name="pin" strokeWidth={1.8} />
           </span>
           <div>
             <p className="font-bold tracking-tight">GN특장 공장</p>

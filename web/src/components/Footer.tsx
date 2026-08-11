@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { Suspense } from "react";
 
-import { apiFetch } from "@/lib/api";
-import type { Contact } from "@/lib/types";
+import BrandMark from "@/components/BrandMark";
+import DataError from "@/components/DataError";
+import { NAV_ITEMS } from "@/lib/nav";
+import { getContact } from "@/lib/data";
+import { telHref } from "@/lib/phone";
 
 const DL_CLASS = "grid gap-6 sm:grid-cols-3";
 
@@ -12,26 +15,22 @@ export default function Footer() {
       <div className="wrap py-14 text-sm">
         <div className="flex flex-col gap-8 border-b border-border pb-10 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand text-sm font-black text-brand-contrast">
-                GN
-              </span>
-              <span className="text-[1.0625rem] font-bold tracking-tight">
-                GN특장
-              </span>
-            </div>
+            <BrandMark />
             <p className="mt-3 text-muted">
               탑차 · 윙바디 · 냉동탑 · 리프트 수리 전문
             </p>
           </div>
 
-          <nav className="flex gap-6 font-medium">
-            <Link href="/" className="text-muted hover:text-foreground">
-              홈
-            </Link>
-            <Link href="/blog" className="text-muted hover:text-foreground">
-              블로그
-            </Link>
+          <nav aria-label="푸터" className="flex gap-6 font-medium">
+            {NAV_ITEMS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-muted hover:text-foreground"
+              >
+                {item.label}
+              </Link>
+            ))}
           </nav>
         </div>
 
@@ -48,20 +47,10 @@ export default function Footer() {
 }
 
 async function FooterContact() {
-  let contact: Contact | null = null;
-
-  try {
-    contact = await apiFetch<Contact>("/api/contact");
-  } catch {
-    contact = null;
-  }
+  const contact = await getContact();
 
   if (!contact) {
-    return (
-      <p className="text-muted">
-        연락처를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-      </p>
-    );
+    return <DataError className="">연락처를 불러오지 못했습니다.</DataError>;
   }
 
   return (
@@ -75,10 +64,7 @@ async function FooterContact() {
           휴대전화
         </dt>
         <dd className="mt-1.5 font-medium tabular-nums">
-          <a
-            href={`tel:${contact.phone.replace(/-/g, "")}`}
-            className="hover:text-brand"
-          >
+          <a href={telHref(contact.phone)} className="hover:text-brand">
             {contact.phone}
           </a>
         </dd>
@@ -91,7 +77,7 @@ async function FooterContact() {
           {contact.callCenter.map((number) => (
             <a
               key={number}
-              href={`tel:${number.replace(/-/g, "")}`}
+              href={telHref(number)}
               className="hover:text-brand"
             >
               {number}
