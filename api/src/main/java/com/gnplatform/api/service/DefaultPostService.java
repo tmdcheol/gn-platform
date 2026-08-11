@@ -38,7 +38,7 @@ public class DefaultPostService implements PostService {
 
     @Override
     public List<PostResponse> getPublishedPosts() {
-        return postRepository.findAllByPublishedTrueOrderByCreatedAtDesc().stream()
+        return postRepository.findAllByPublishedTrueOrderByCreatedAtDescIdDesc().stream()
                 .map(PostResponse::from)
                 .toList();
     }
@@ -50,7 +50,7 @@ public class DefaultPostService implements PostService {
 
     @Override
     public List<PostResponse> getAllPosts() {
-        return postRepository.findAllByOrderByCreatedAtDesc().stream()
+        return postRepository.findAllByOrderByCreatedAtDescIdDesc().stream()
                 .map(PostResponse::from)
                 .toList();
     }
@@ -82,10 +82,12 @@ public class DefaultPostService implements PostService {
         return postRepository.findById(id).map(post -> {
             // 제목이 바뀌어도 슬러그는 유지합니다 — URL이 바뀌면 색인이 날아갑니다.
             post.update(request.title(), request.excerpt(), request.content(), request.thumbnailUrl());
-            if (request.published()) {
-                post.publish();
-            } else {
-                post.unpublish();
+            if (request.published() != post.isPublished()) {
+                if (request.published()) {
+                    post.publish();
+                } else {
+                    post.unpublish();
+                }
             }
             return PostResponse.from(post);
         });

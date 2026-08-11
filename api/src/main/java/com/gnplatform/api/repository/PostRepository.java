@@ -11,9 +11,9 @@ public interface PostRepository extends JpaRepository<Post, Long> {
 
     boolean existsBySlug(String slug);
 
-    List<Post> findAllByPublishedTrueOrderByCreatedAtDesc();
+    List<Post> findAllByPublishedTrueOrderByCreatedAtDescIdDesc();
 
-    List<Post> findAllByOrderByCreatedAtDesc();
+    List<Post> findAllByOrderByCreatedAtDescIdDesc();
 
     Optional<Post> findBySlugAndPublishedTrue(String slug);
 }

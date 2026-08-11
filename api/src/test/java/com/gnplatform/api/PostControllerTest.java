@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MockMvc;
 
 import tools.jackson.databind.ObjectMapper;
@@ -37,6 +38,9 @@ class PostControllerTest {
 
     @Autowired
     PostRepository postRepository;
+
+    @Autowired
+    JdbcTemplate jdbcTemplate;
 
     // MockMvc 테스트는 트랜잭션 롤백이 되지 않으므로 다른 테스트에 데이터가 새지 않도록 직접 지웁니다.
     @BeforeEach
@@ -149,6 +153,21 @@ class PostControllerTest {
         mockMvc.perform(get("/api/posts"))
                 .andExpect(jsonPath("$[0].slug").value("나중에-쓴-글"))
                 .andExpect(jsonPath("$[1].slug").value("먼저-쓴-글"));
+    }
+
+    @Test
+    @DisplayName("createdAt이 같아도 목록 순서가 흔들리지 않는다")
+    void orderIsStableOnEqualCreatedAt() throws Exception {
+        Long first = savePost("먼저 쓴 글", "먼저-쓴-글", true);
+        Long second = savePost("나중에 쓴 글", "나중에-쓴-글", true);
+        jdbcTemplate.update("UPDATE post SET created_at = (SELECT created_at FROM post WHERE id = ?) WHERE id = ?",
+                first, second);
+
+        for (int i = 0; i < 5; i++) {
+            mockMvc.perform(get("/api/posts"))
+                    .andExpect(jsonPath("$[0].id").value(second.intValue()))
+                    .andExpect(jsonPath("$[1].id").value(first.intValue()));
+        }
     }
 
     @Test
