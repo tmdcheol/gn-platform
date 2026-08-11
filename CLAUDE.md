@@ -12,8 +12,9 @@
 
 ## 티켓 본문에 묻혀 있는 전역 제약
 
-- 웹 폼은 `'use client'` + `useState`. **폼 라이브러리 금지.** 라이트박스 등 UI도 **라이브러리 없이 직접 구현.**
-  유일한 예외는 마크다운 렌더링 — `react-markdown` + `remark-gfm`을 쓰고 **`rehype-raw`는 켜지 않습니다**(XSS).
+- 웹 폼은 `'use client'` + `useState`. **잘 만들어진 라이브러리가 있으면 직접 구현하지 말고 씁니다.**
+  마크다운은 `react-markdown` + `remark-gfm`을 쓰고 **`rehype-raw`는 켜지 않습니다**(XSS).
+  새 의존성을 추가할 때는 관리 상태와 번들 크기를 한 번 보고, 무엇을 왜 넣었는지 커밋 메시지에 남깁니다.
 - 설정 파일은 전부 YAML. `application.properties`를 만들지 마세요.
 - 하드코딩 금지: 연락처는 `/api/contact`에서만, API 주소는 `NEXT_PUBLIC_API_BASE_URL` + `web/src/lib/api.ts` 래퍼로만, CORS 오리진은 `application.yml`에서만. **유일한 예외는 T-46의 fallback 연락처.**
   관리자 계정·스토리지 키 같은 시크릿은 yml에 값이 아니라 `${ENV_VAR}` 참조만 둡니다.
