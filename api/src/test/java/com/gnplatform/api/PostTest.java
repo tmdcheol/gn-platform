@@ -12,6 +12,15 @@ import com.gnplatform.api.domain.Post;
 @DisplayName("Post 도메인")
 class PostTest {
 
+    /** LocalDateTime.now()가 직전 호출과 같은 값을 돌려주지 않도록 최소한의 간격을 둡니다. */
+    private void sleepAMoment() {
+        try {
+            Thread.sleep(1);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
     private Post newPost() {
         return Post.builder()
                 .slug("윙바디-유압-누유")
@@ -29,11 +38,12 @@ class PostTest {
     void publish() {
         Post post = newPost();
         LocalDateTime before = post.getUpdatedAt();
+        sleepAMoment();
 
         post.publish();
 
         assertThat(post.isPublished()).isTrue();
-        assertThat(post.getUpdatedAt()).isAfterOrEqualTo(before);
+        assertThat(post.getUpdatedAt()).isAfter(before);
     }
 
     @Test
@@ -42,11 +52,12 @@ class PostTest {
         Post post = newPost();
         post.publish();
         LocalDateTime before = post.getUpdatedAt();
+        sleepAMoment();
 
         post.unpublish();
 
         assertThat(post.isPublished()).isFalse();
-        assertThat(post.getUpdatedAt()).isAfterOrEqualTo(before);
+        assertThat(post.getUpdatedAt()).isAfter(before);
     }
 
     @Test
@@ -54,6 +65,7 @@ class PostTest {
     void update() {
         Post post = newPost();
         LocalDateTime before = post.getUpdatedAt();
+        sleepAMoment();
 
         post.update("바뀐 제목", "바뀐 요약", "## 바뀐 본문", "/images/b.jpg");
 
@@ -61,7 +73,7 @@ class PostTest {
         assertThat(post.getExcerpt()).isEqualTo("바뀐 요약");
         assertThat(post.getContent()).isEqualTo("## 바뀐 본문");
         assertThat(post.getThumbnailUrl()).isEqualTo("/images/b.jpg");
-        assertThat(post.getUpdatedAt()).isAfterOrEqualTo(before);
+        assertThat(post.getUpdatedAt()).isAfter(before);
     }
 
     @Test

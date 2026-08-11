@@ -7,8 +7,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,11 +30,12 @@ public class Post {
     @Column(length = 300)
     private String excerpt;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
     private String thumbnailUrl;
 
+    @Column(nullable = false)
     private String author;
 
     @Column(nullable = false)
@@ -60,22 +59,6 @@ public class Post {
         this.published = published;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = this.createdAt;
-    }
-
-    @PrePersist
-    void onPersist() {
-        LocalDateTime now = LocalDateTime.now();
-        if (createdAt == null) {
-            createdAt = now;
-        }
-        if (updatedAt == null) {
-            updatedAt = now;
-        }
-    }
-
-    @PreUpdate
-    void onUpdate() {
-        updatedAt = LocalDateTime.now();
     }
 
     /**
