@@ -2,6 +2,8 @@ package com.gnplatform.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Locale;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +29,18 @@ class SlugGeneratorTest {
     @DisplayName("영문은 소문자로 바뀐다")
     void lowercase() {
         assertThat(SlugGenerator.generate("Wing Body Repair")).isEqualTo("wing-body-repair");
+    }
+
+    @Test
+    @DisplayName("소문자화는 JVM 기본 로케일에 영향받지 않는다")
+    void lowercaseIsLocaleIndependent() {
+        Locale original = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr"));
+            assertThat(SlugGenerator.generate("LIFT 수리")).isEqualTo("lift-수리");
+        } finally {
+            Locale.setDefault(original);
+        }
     }
 
     @Test
