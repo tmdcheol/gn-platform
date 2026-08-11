@@ -12,7 +12,7 @@
   - 휴대전화 `010-5243-3064` / 콜센터 `1688-2178`, `1666-1347`
   - 카카오톡 오픈채팅 **https://open.kakao.com/o/sVPLBe6**
   - 주소: 광주 광산구 지로길 33 공장 (지죽동 127-4)
-- **예상 소요**: 6~8시간
+- **예상 소요**: 12~16시간
 - **난이도**: 하 (개별 티켓은 전부 30분 이내 분량입니다. 개수가 많을 뿐입니다)
 
 ---
@@ -21,7 +21,7 @@
 
 ### 티켓 단위로 진행합니다
 
-아래에 **38개의 작은 티켓**이 있습니다. 각 티켓은 **하나의 Claude Code 요청 = 하나의 커밋**입니다.
+아래에 **52개의 작은 티켓**이 있습니다. 각 티켓은 **하나의 Claude Code 요청 = 하나의 커밋**입니다.
 
 ```
 티켓 하나 읽기 → Claude Code에 요청 → 완료 조건 직접 확인 → 커밋 → 다음 티켓
@@ -31,7 +31,7 @@
 
 - 티켓 **하나씩만** 요청하세요. "T-11부터 T-16까지 해줘" 같은 요청은 반드시 꼬입니다.
 - **완료 조건을 눈으로 확인하기 전에는 다음으로 넘어가지 마세요.** 브라우저를 열거나 `curl`을 치세요.
-- 티켓마다 커밋하세요. 최소 38커밋이 남습니다.
+- 티켓마다 커밋하세요. 최소 52커밋이 남습니다.
 - 순서를 바꿔도 되지만, **단계는 순서대로** 가세요 (앞 단계가 뒤 단계의 재료입니다).
 
 ### 테스트 코드는 항상 함께 작성합니다 (api)
@@ -61,9 +61,14 @@
 |---|---|---|
 | 1 | T-01 ~ T-04 | 프로젝트 세팅 |
 | 2 | T-05 ~ T-16 | 콘텐츠 API + 메인 랜딩 + **전화/카톡 버튼** |
-| 3 | T-17 ~ T-25 | 블로그 CRUD + 블로그 화면 |
-| 4 | T-26 ~ T-34 | 페이지네이션·검색 · 갤러리 · 다크모드 · 마감 |
-| 5 | T-35 ~ T-38 | 배포 및 실기기 검증 |
+| 3 | T-17 ~ T-25 | 콘텐츠 데이터 모델 + **관리자 인증** + 이미지 업로드 |
+| 4 | T-26 ~ T-32 | 블로그 공개 화면 + **SEO**(메타데이터·사이트맵·JSON-LD·서비스 랜딩) |
+| 5 | T-33 ~ T-38 | 관리자 화면 (로그인 · 마크다운 작성 · 캐시 무효화) |
+| 6 | T-39 ~ T-47 | 페이지네이션·검색 · 갤러리 · 다크모드 · 마감 |
+| 7 | T-48 ~ T-52 | 배포 · 실기기 검증 · **검색엔진 등록** |
+
+> 📌 **T-01 ~ T-16은 완료되었습니다.** T-17부터는 "검색 유입용 콘텐츠 마케팅 사이트, 글은 관리자만 작성"이라는
+> 실제 목적에 맞춰 재설계된 스펙입니다. 원래 있던 블로그 CRUD 티켓을 대체합니다.
 
 ---
 
@@ -281,14 +286,31 @@ NEXT_PUBLIC_API_BASE_URL=http://localhost:8080
 
 ---
 
-# 단계 3 — 블로그
+# 단계 3 — 데이터 모델 + 관리자 인증 (api)
 
-## 3-A. API 쪽
+> **이 단계부터 목적이 바뀝니다.** 블로그는 사내 게시판이 아니라 **검색 유입을 노리는 콘텐츠 마케팅 채널**이고,
+> 글은 **관리자만** 씁니다. 그래서 (1) 쓰기 API에 인증이 붙고, (2) `Post`가 SEO용 필드를 갖습니다.
+> 이 두 가지는 **나중에 붙이면 URL과 색인이 리셋되므로** 데이터 모델 단계에서 확정합니다.
 
 ### T-17. `Post` 엔티티 + H2 파일 모드 설정
 
-`domain` 패키지에 `Post` 엔티티. 필드: `id`, `title`, `content`, `author`, `createdAt`, `updatedAt`
-Lombok은 `@Getter` + `@Builder` + `@NoArgsConstructor(access = AccessLevel.PROTECTED)`까지만 — **setter 금지**, 수정은 도메인 메서드로 (T-18/T-24의 수정 기능이 이걸 씁니다).
+`domain` 패키지에 `Post` 엔티티.
+
+| 필드 | 타입 | 설명 |
+|---|---|---|
+| `id` | Long | PK |
+| `slug` | String | **unique**. URL에 쓰입니다 (`/blog/윙바디-유압-누유`) |
+| `title` | String | 글 제목 = `<title>` |
+| `excerpt` | String(300) | 요약. 목록 카드와 **meta description**에 씁니다 |
+| `content` | String(TEXT) | **Markdown 원문**을 그대로 저장 |
+| `thumbnailUrl` | String, nullable | 목록 카드 · OG 이미지 |
+| `author` | String | |
+| `published` | boolean | `false`면 임시저장 — **공개 화면에 절대 노출 금지** |
+| `createdAt` / `updatedAt` | LocalDateTime | |
+
+Lombok은 `@Getter` + `@Builder` + `@NoArgsConstructor(access = AccessLevel.PROTECTED)`까지만 — **setter 금지**.
+상태 변경은 의미 있는 이름의 도메인 메서드로: `update(...)`, `publish()`, `unpublish()`.
+`content`는 `@Column(columnDefinition = "TEXT")`, `slug`는 `@Column(unique = true)`.
 
 `application.yml`:
 
@@ -309,175 +331,365 @@ spring:
 ```
 
 `api/data/`는 `.gitignore`에 추가. H2 콘솔: http://localhost:8080/h2-console
+통합 테스트가 개발용 H2 파일을 건드리지 않도록 **인메모리 H2를 쓰는 `src/test/resources/application-test.yml`을 여기서 함께** 만드세요.
 
-> ✅ 완료 조건: 기동 후 `api/data/` 폴더에 파일이 생기고, H2 콘솔에서 `POST` 테이블이 보인다
-
----
-
-### T-18. 게시글 CRUD
-
-계층 구성은 `CLAUDE.md`의 "API 아키텍처"를 따릅니다.
-
-- `service/ports/in/PostService` 인터페이스 + `service/DefaultPostService` 구현
-- `repository/PostRepository extends JpaRepository<Post, Long>`
-- `controller/PostController`, 요청/응답은 `dto`의 `record`
-- 컨트롤러는 리포지토리를 직접 참조하지 않고 `PostService`만 호출합니다.
-
-| Method | Path | 응답 |
-|---|---|---|
-| GET | `/api/posts` | 200 (최신순) |
-| GET | `/api/posts/{id}` | 200 / 404 |
-| POST | `/api/posts` | 201 + `Location` 헤더 |
-| PUT | `/api/posts/{id}` | 200 / 404 |
-| DELETE | `/api/posts/{id}` | 204 / 404 |
-
-> ✅ 완료 조건: `curl`로 생성 → 조회 → 수정 → 삭제가 전부 되고, 삭제한 id 조회 시 **404**
+> ✅ 완료 조건: 기동 후 `api/data/`에 파일이 생기고 H2 콘솔에서 `POST` 테이블에 위 컬럼이 전부 보인다
+> ✅ 테스트: 순수 단위 테스트로 `publish()` / `unpublish()` / `update()` 가 필드를 바꾸고 `updatedAt`이 갱신되는지
 
 ---
 
-### T-19. 검증 + 404 예외 처리
+### T-18. 슬러그 생성 도메인 로직
 
-- `dto`의 요청 `record`에 `@Valid` + `@NotBlank` → 제목/본문이 비면 **400**
-- 404는 커스텀 예외로. HTTP 매핑은 `controller/GlobalExceptionHandler`(`@RestControllerAdvice`)에서 모아 처리합니다.
+제목에서 URL 슬러그를 만드는 로직. **한글은 그대로 둡니다** (한국어 검색에서 불리하지 않고, 오히려 쿼리와 일치합니다).
 
-> ✅ 완료 조건: 빈 제목으로 POST → 400 / 없는 id 조회 → 500이 아니라 404
+규칙: 소문자화 → 공백을 `-`로 → 한글/영문/숫자/`-` 외 문자 제거 → 연속 `-` 축약 → 앞뒤 `-` 제거.
+빈 문자열이 되면(예: 제목이 기호뿐) `post-{timestamp}`로 대체.
+**중복 처리**: 이미 같은 슬러그가 있으면 `-2`, `-3`을 붙입니다. 중복 조회는 리포지토리가 필요하므로
+**슬러그 문자열 변환은 `domain`의 순수 함수**로, **중복 회피는 `DefaultPostService`**로 나눕니다.
+
+> ✅ 완료 조건: `"윙바디 유압 누유, 원인 3가지"` → `윙바디-유압-누유-원인-3가지`
+> ✅ 테스트: 변환 규칙은 **스프링 없는 순수 단위 테스트**. 중복 회피(`-2` 부여)는 `@SpringBootTest` + `@Transactional`
 
 ---
 
-### T-20. 샘플 글 시딩
+### T-19. 게시글 CRUD
+
+계층 구성은 `CLAUDE.md`의 "API 컨벤션"을 따릅니다.
+`service/ports/in/PostService` + `service/DefaultPostService` + `repository/PostRepository` + `controller/PostController` + `dto`의 `record`.
+
+**공개용과 관리용 경로를 나눕니다.** 이게 이 티켓의 핵심입니다 — 공개 경로는 임시저장 글을 절대 반환하지 않습니다.
+
+| Method | Path | 인증 | 응답 |
+|---|---|---|---|
+| GET | `/api/posts` | 공개 | 200 — **`published=true`만**, 최신순 |
+| GET | `/api/posts/{slug}` | 공개 | 200 / 404 — **`published=true`만**, 슬러그로 조회 |
+| GET | `/api/admin/posts` | 관리자 | 200 — 임시저장 포함 전체 |
+| GET | `/api/admin/posts/{id}` | 관리자 | 200 / 404 — **id로** 조회 (편집 화면용) |
+| POST | `/api/admin/posts` | 관리자 | 201 + `Location` |
+| PUT | `/api/admin/posts/{id}` | 관리자 | 200 / 404 |
+| DELETE | `/api/admin/posts/{id}` | 관리자 | 204 / 404 |
+
+인증은 T-21~T-22에서 붙입니다. **이 티켓에서는 경로만 나누고 전부 열어둡니다.**
+슬러그는 요청에서 받지 않고 **서버가 제목으로부터 생성**합니다(T-18). 수정 시 제목이 바뀌어도 **슬러그는 유지**합니다 — URL이 바뀌면 그동안 쌓인 색인이 날아갑니다.
+
+> ✅ 완료 조건: `curl`로 생성 → 슬러그로 조회 → 수정 → 삭제가 되고, 삭제한 슬러그 조회 시 **404**
+> ✅ 완료 조건: `published=false`로 만든 글이 `GET /api/posts`에는 없고 `GET /api/admin/posts`에는 있다
+> ✅ 테스트: 위 두 줄을 그대로 컨트롤러 테스트로. 특히 **임시저장 글이 공개 목록·공개 상세에서 안 보이는 것**을 반드시 고정하세요
+
+---
+
+### T-20. 검증 + 404 예외 처리
+
+- 요청 `record`에 `@Valid` + `@NotBlank`(title, content, author) → 비면 **400**
+- `excerpt`는 비었으면 **본문 앞 150자로 서버가 자동 생성** (관리자가 매번 쓰기 귀찮아 비워두면 meta description이 빕니다)
+- 404는 커스텀 예외로. HTTP 매핑은 `controller/GlobalExceptionHandler`(`@RestControllerAdvice`)에서 모아 처리
+
+> ✅ 완료 조건: 빈 제목 POST → 400 / 없는 슬러그 조회 → 500이 아니라 404 / excerpt 없이 생성 → 응답에 자동 요약이 들어 있다
+
+---
+
+### T-21. 관리자 로그인 (Spring Security 세션)
+
+`build.gradle.kts`에 Spring Security 의존성 추가. **Spring Boot 4는 스타터 아티팩트명이 바뀌었을 수 있으니
+`spring-boot-starter-security` / 테스트용 아티팩트명을 먼저 확인**하고 추가하세요.
+
+- 관리자 계정은 **1개**. 아이디·비밀번호 해시를 `application.yml`에서 읽되 **값은 환경변수로 주입**합니다:
+  ```yaml
+  app:
+    admin:
+      username: ${ADMIN_USERNAME}
+      password-hash: ${ADMIN_PASSWORD_HASH}   # BCrypt 해시. 평문 금지
+  ```
+  로컬용 값은 `.env`/실행 환경에만 두고 **커밋하지 마세요.**
+- `config/SecurityConfig`: `SecurityFilterChain` 빈. 세션 쿠키 기반.
+- 엔드포인트: `POST /api/auth/login`(200/401) · `POST /api/auth/logout`(204) · `GET /api/auth/me`(200/401)
+- CSRF는 이 구성에선 켜두면 프론트에서 토큰을 실어야 합니다. **끄지 말고**, 끄기로 정했다면 그 이유를 커밋 메시지에 남기세요.
+- CORS: 쿠키를 주고받으므로 `allowCredentials(true)`가 필요하고, 그 순간 `allowedOrigins`에 `*`를 쓸 수 없습니다.
+  기존 `app.cors.allowed-origins`(T-05)를 그대로 씁니다.
+
+> ✅ 완료 조건: 올바른 비밀번호로 `POST /api/auth/login` → 200 + `Set-Cookie` / 틀린 비밀번호 → **401**
+> ✅ 완료 조건: 로그인 쿠키 없이 `GET /api/auth/me` → 401
+> ✅ 테스트: 로그인 성공·실패·`/me` 3케이스를 MockMvc로. **비밀번호를 테스트에 평문 하드코딩하지 말고** 테스트 프로필 값으로
+
+---
+
+### T-22. 쓰기 API 인증 보호
+
+`SecurityConfig`에서 경로 규칙을 확정합니다.
+
+- `/api/admin/**` → **인증 필요**
+- `/api/posts/**`, `/api/contact`, `/api/services`, `/api/reviews` → 공개
+- 인증 실패는 **401**, 인증은 됐지만 권한이 없으면 403. 로그인 페이지로 **리다이렉트하지 말고** JSON으로 응답하세요(API이므로)
+
+> ⭐ 이 티켓을 건너뛰면 **아무나 글을 쓰고 지울 수 있는 사이트가 배포됩니다.** 실제로 스팸이 들어옵니다.
+
+> ✅ 완료 조건: 쿠키 없이 `POST /api/admin/posts` → 401 / 로그인 후 같은 요청 → 201
+> ✅ 테스트: `/api/admin/posts`의 GET·POST·PUT·DELETE 각각에 대해 **비인증 401**과 **인증 성공** 두 축을 검증
+
+---
+
+### T-23. 이미지 업로드
+
+수리 사례는 사진이 핵심 콘텐츠입니다. 무료 플랜 디스크는 휘발성이므로 **로컬 파일 저장은 안 됩니다.**
+
+- 오브젝트 스토리지(Supabase Storage 권장 — 무료, 설정이 가장 짧음)에 업로드하고 **공개 URL을 반환**
+- `POST /api/admin/images` (multipart, **인증 필요**) → `{ "url": "https://..." }`
+- 스토리지 키는 **환경변수로만**. 커밋 금지
+- 서버에서 확장자·MIME·용량(예: 5MB)을 검증하고 위반 시 400
+
+> ✅ 완료 조건: `curl -F file=@사진.jpg`(로그인 쿠키 포함) → 반환된 URL을 브라우저에서 열면 이미지가 보인다 / 쿠키 없이 → 401
+> ✅ 테스트: 비인증 401, 허용되지 않는 타입 400. **실제 업로드 테스트는 외부 의존이므로 제외**하고, 검증 로직만 고정하세요
+
+---
+
+### T-24. 서비스 상세 데이터 확장
+
+`/services/[slug]` 랜딩 페이지(T-31)의 재료입니다. `RepairResponse`(T-07)에 필드를 추가합니다.
+
+`slug`(예: `wing-body`), `longDescription`(3~5문단, **실제 증상과 작업 내용**을 구체적으로 — 이 텍스트가 검색 결과를 결정합니다), `symptoms`(대표 증상 4~6개 배열).
+`GET /api/services/{slug}` (200/404) 추가. 데이터는 T-07처럼 `DefaultRepairService` 상수로 둡니다.
+
+> ✅ 완료 조건: `curl localhost:8080/api/services/wing-body` → 상세 필드가 들어 있고, 없는 슬러그는 404
+
+---
+
+### T-25. 샘플 글 시딩
 
 `config/DataInitializer`(`CommandLineRunner`)로 **글이 0건일 때만** 샘플 **12건** 삽입.
-(페이지네이션을 눈으로 확인하려면 2페이지 이상 필요합니다)
+전부 `published=true`, 본문은 **마크다운**(`##` 소제목·목록 포함), 제목은 실제로 검색될 법한 것으로:
+"냉동탑 온도가 안 내려갈 때 확인할 3가지", "윙바디 한쪽만 안 올라가는 이유" 같은 식.
 
-> ✅ 완료 조건: 서버를 두 번 재시작해도 글이 12건 그대로 (24건으로 늘어나지 않음)
+> ✅ 완료 조건: 서버를 두 번 재시작해도 12건 그대로 (24건이 되지 않음)
 
 ---
 
-## 3-B. 웹 쪽
+# 단계 4 — 공개 화면 + SEO (web)
 
-> 공통: 폼은 `'use client'` + `useState`로. **폼 라이브러리 금지.**
+> 공통: **블로그 공개 화면은 전부 서버 컴포넌트에서 `await` fetch** 합니다.
+> `useEffect` + `fetch`로 가져오면 크롤러에는 **빈 페이지**가 갑니다. 이 단계의 목적 자체가 무너집니다.
 > **로딩·에러 상태를 반드시 표시하세요.** API가 안 떠 있을 때 화면이 하얗게 비면 미완성입니다.
 
-### T-21. `/blog` 목록
+### T-26. `/blog` 목록
 
-데스크톱 3열 / 모바일 1열 카드. 우상단 "글쓰기" 버튼.
+데스크톱 3열 / 모바일 1열 카드. 썸네일 + 제목 + `excerpt` + 작성일.
+**"글쓰기" 버튼은 두지 않습니다** — 작성은 `/admin`에서만 합니다. 공개 화면에 관리 링크를 노출하지 마세요.
 
-> ✅ 완료 조건: 시딩된 글이 카드로 보이고, 클릭하면 상세로 이동
-
----
-
-### T-22. `/blog/[id]` 상세
-
-제목 · 작성자 · 작성일 · 본문 + 수정/삭제 버튼.
-삭제는 `confirm` 후 실행하고 `/blog`로 이동.
-
-> ✅ 완료 조건: 삭제하면 목록에서 사라진다
+> ✅ 완료 조건: 시딩된 글이 카드로 보이고 클릭하면 상세로 이동
+> ✅ 완료 조건: 브라우저에서 **JavaScript를 끄고** 새로고침해도 글 목록이 보인다 (= 서버 렌더 확인)
 
 ---
 
-### T-23. `/blog/new` 작성
+### T-27. `/blog/[slug]` 상세 + 마크다운 렌더
 
-제목 · 작성자 · 내용 → POST 후 **생성된 글 상세로 이동**.
+제목 · 작성자 · 작성일 · 본문. **수정/삭제 버튼은 없습니다** (관리자 화면으로 이동).
 
-> ✅ 완료 조건: 글을 쓰면 상세 페이지로 넘어가고, 목록에도 나타난다
+마크다운 렌더링은 **직접 구현하지 말고 `react-markdown` + `remark-gfm`을 쓰세요.**
+(`CLAUDE.md`의 "라이브러리 금지"에 대한 **명시적 예외**입니다. 마크다운 파서를 손으로 짜는 건 비현실적이고,
+`react-markdown`은 기본값에서 원시 HTML을 렌더하지 않아 XSS 안전합니다 — **`rehype-raw`를 켜지 마세요.**)
 
----
+렌더 결과가 `<h2>`, `<ul>`, `<a>` 같은 **진짜 태그**로 나와야 합니다. `<p>` 한 덩어리면 검색엔진이 구조를 못 읽습니다.
+Tailwind 기본 리셋 때문에 소제목이 본문과 같은 크기로 나오므로 **본문 영역에 타이포 스타일을 직접 지정**하세요.
 
-### T-24. `/blog/[id]/edit` 수정
-
-기존 값 프리필 → PUT 후 상세로 이동.
-
-> ✅ 완료 조건: 수정 후 상세 화면에 바뀐 내용이 보인다
-
----
-
-### T-25. 메인에 "최신 블로그 3건"
-
-`/api/posts?size=3` + "전체 보기" 링크.
-
-> ✅ 완료 조건: 새 글을 쓰면 메인 최신 3건이 바뀐다
+> ✅ 완료 조건: 개발자도구 Elements에서 소제목이 `<h2>`, 목록이 `<ul><li>`로 보인다
+> ✅ 완료 조건: 임시저장 글의 슬러그로 직접 접근하면 404 화면
 
 ---
 
-# 단계 4 — 페이지네이션·검색 · 갤러리 · 마감
+### T-28. 메타데이터 (글마다 다른 title/description)
 
-### T-26. 목록 API 페이지네이션
+`generateMetadata`로 **페이지마다** title · description · canonical · Open Graph를 만듭니다.
 
-컨트롤러가 `Pageable`을 받아 서비스에 넘기고, 서비스가 `Page<Post>`를 반환하면 끝입니다.
-다만 **엔티티를 그대로 내보내지 말고** `dto`의 응답 `record`로 매핑하세요 (`page.map(PostResponse::from)`).
-응답에 `content`, `totalPages`, `number`가 그대로 들어갑니다.
+- 블로그 상세: `title` = 글 제목, `description` = `excerpt`, `openGraph.images` = `thumbnailUrl`, `type: 'article'`
+- 목록·메인도 각각 고유한 title/description
+- `metadataBase`와 canonical URL을 위해 `NEXT_PUBLIC_SITE_URL` 환경변수를 추가 (배포 도메인)
+
+> ⭐ 지금은 모든 페이지가 `layout.tsx`의 title 하나를 공유합니다. **글 12개가 전부 같은 제목으로 색인됩니다.** 이 티켓이 그걸 고칩니다.
+
+> ✅ 완료 조건: 글 3개의 페이지 소스에서 `<title>`과 `og:title`이 **서로 다르다**
+> ✅ 완료 조건: `<link rel="canonical">`이 자기 자신의 절대 URL을 가리킨다
+
+---
+
+### T-29. `sitemap.ts` + `robots.ts`
+
+App Router의 `app/sitemap.ts`, `app/robots.ts`.
+
+- sitemap: 메인 + `/blog` + **발행된 글 전체**(`lastModified` = `updatedAt`) + **서비스 랜딩 8개**
+- robots: 전체 허용하되 **`/admin`은 `disallow`**, `sitemap` 위치 명시
+
+> ✅ 완료 조건: `/sitemap.xml`에 발행 글의 슬러그 URL이 전부 들어 있고, 임시저장 글은 **없다**
+> ✅ 완료 조건: `/robots.txt`에 `Disallow: /admin`이 있다
+
+---
+
+### T-30. 구조화 데이터 (JSON-LD)
+
+지역 업체에는 **블로그 글 10개보다 이게 효과가 큽니다.** 검색 결과에 전화번호·주소·별점이 직접 노출됩니다.
+
+- 메인: `LocalBusiness` — 상호·주소·전화(`/api/contact` 값 사용)·영업시간·`areaServed`
+- 블로그 상세: `Article` — headline, datePublished, dateModified, author, image
+- 상세/랜딩: `BreadcrumbList`
+
+`<script type="application/ld+json">`을 서버 컴포넌트에서 출력합니다. **연락처는 `/api/contact`에서만** 가져오세요(T-06 원칙).
+
+> ✅ 완료 조건: [Rich Results Test](https://search.google.com/test/rich-results)에 메인과 글 상세 URL을 넣어 **오류 0건**
+> (배포 전이면 페이지 소스의 JSON-LD를 복사해 붙여넣어 검증)
+
+---
+
+### T-31. 서비스별 랜딩 페이지 `/services/[slug]`
+
+"광주 윙바디 수리" 같은 **지역+서비스 쿼리**를 잡는 페이지입니다. 블로그보다 전환에 가까운 유입입니다.
+
+`generateStaticParams`로 8개 슬러그를 미리 생성. 구성: H1(서비스명+지역) · `longDescription` · `symptoms` 체크리스트 · **전화/카톡 CTA** · 관련 블로그 글 링크.
+각 페이지마다 `generateMetadata`(T-28)와 `BreadcrumbList`(T-30)를 붙입니다.
+
+> ✅ 완료 조건: `/services/wing-body`가 열리고, 8개 슬러그가 전부 sitemap에 들어 있으며, 각 페이지 `<title>`이 서로 다르다
+
+---
+
+### T-32. 메인에 "최신 블로그 3건" + 서비스 카드 연결
+
+`/api/posts?size=3` + "전체 보기" 링크. 그리고 T-14의 서비스 카드가 **각 서비스 랜딩 페이지로 링크**되게 합니다(내부 링크가 색인에 도움이 됩니다).
+
+> ✅ 완료 조건: 새 글을 발행하면 메인 최신 3건이 바뀐다 / 서비스 카드 클릭 → 해당 랜딩 페이지
+
+---
+
+# 단계 5 — 관리자 화면 (web)
+
+> `/admin` 이하는 **검색에 잡히면 안 됩니다.** robots(T-29)에 더해 각 관리자 페이지 메타데이터에 `robots: { index: false }`.
+
+### T-33. `/admin/login`
+
+`'use client'` + `useState` 폼. **폼 라이브러리 금지.**
+`POST /api/auth/login` 호출 시 **`credentials: 'include'`가 없으면 쿠키가 저장되지 않습니다** — [api.ts](web/src/lib/api.ts) 래퍼에 옵션을 열어주세요.
+실패 시 "아이디 또는 비밀번호가 올바르지 않습니다" 표시. 성공하면 `/admin`으로 이동.
+
+> ✅ 완료 조건: 틀린 비밀번호 → 에러 문구 / 맞으면 `/admin` 이동 후 새로고침해도 로그인이 유지된다
+
+---
+
+### T-34. `/admin` 글 목록
+
+`GET /api/admin/posts`. 제목 · 작성일 · **발행/임시 배지** · 수정/삭제. 우상단 "새 글" 버튼.
+401이 오면 `/admin/login`으로 보냅니다.
+
+> ✅ 완료 조건: 로그아웃 상태로 `/admin` 직접 접근 → 로그인 화면으로 이동 / 로그인 상태 → 임시저장 글도 보인다
+
+---
+
+### T-35. `/admin/posts/new` 작성
+
+제목 · 작성자 · 요약(비우면 자동) · **마크다운 본문** · 발행 여부 체크박스.
+**좌우 분할 미리보기** — 오른쪽에 T-27과 같은 렌더 결과. 저장 후 관리자 목록으로 이동.
+
+> ✅ 완료 조건: 마크다운으로 쓴 소제목이 미리보기에서 큰 글씨로 보이고, 저장하면 목록에 나타난다
+> ✅ 완료 조건: **발행 체크를 끈 채 저장하면** 목록엔 "임시"로 뜨지만 `/blog`에는 안 보인다
+
+---
+
+### T-36. 이미지 업로드 UI
+
+작성/수정 폼에서 파일 선택 → `POST /api/admin/images` → 반환된 URL을 **썸네일 필드에 채우거나 본문에 `![](url)` 마크다운으로 삽입**.
+업로드 중 상태와 실패 메시지를 표시합니다.
+
+> ✅ 완료 조건: 사진을 올리면 미리보기에 이미지가 뜨고, 저장 후 공개 글에서도 보인다
+
+---
+
+### T-37. `/admin/posts/[id]/edit` 수정 + 삭제
+
+`GET /api/admin/posts/{id}`로 프리필 → PUT. 삭제는 `confirm` 후 실행하고 목록으로 이동.
+**제목을 바꿔도 슬러그는 그대로**임을 화면에 표시하세요(읽기 전용으로 노출).
+
+> ✅ 완료 조건: 수정 후 공개 상세에 바뀐 내용이 보이고 **URL은 그대로** / 삭제하면 목록과 `/blog` 양쪽에서 사라진다
+
+---
+
+### T-38. 발행 시 캐시 무효화
+
+서버 컴포넌트 fetch는 캐시됩니다. 그대로 두면 **글을 써도 `/blog`에 안 나타납니다** (전형적인 함정입니다).
+공개 목록·상세에 `revalidate`를 설정하고, 관리자 저장·삭제 후 해당 경로를 무효화하세요.
+
+> ✅ 완료 조건: 관리자에서 글을 발행하고 `/blog`를 열면 **새로고침 없이는 안 나오는 상황이 발생하지 않는다**
+> ✅ 완료 조건: 글을 수정하면 `/blog/[slug]`에 즉시 반영된다
+
+---
+
+# 단계 6 — 목록 기능 · 갤러리 · 마감
+
+### T-39. 목록 API 페이지네이션
+
+컨트롤러가 `Pageable`을 받아 서비스에 넘기고 서비스가 `Page<Post>`를 반환합니다.
+**엔티티를 그대로 내보내지 말고** `page.map(PostResponse::from)`으로 매핑하세요. 공개 목록은 여전히 `published=true`만.
 
 > ✅ 완료 조건: `curl 'localhost:8080/api/posts?page=1&size=6'` → 7~12번째 글, `totalPages: 2`
 
 ---
 
-### T-27. 목록 API 검색
+### T-40. 목록 API 검색
 
-`PostService`에 `q`를 포함한 조회 메서드를 하나 두고, `DefaultPostService`에서
-`q`가 있으면 `findByTitleContainingIgnoreCaseOrContentContainingIgnoreCase(q, q, pageable)`,
-없으면 `findAll(pageable)`로 분기합니다.
+`PostService`에 `q`를 포함한 조회 메서드를 하나 두고, `DefaultPostService`에서 `q`가 있으면 제목·본문 LIKE 검색, 없으면 전체 조회로 분기합니다. **두 분기 모두 `published` 조건이 유지되어야 합니다.**
 
 > ✅ 완료 조건: `curl 'localhost:8080/api/posts?q=냉동'` → 해당 글만
+> ✅ 테스트: 임시저장 글이 검색 결과에 섞이지 않는 것까지 검증
 
 ---
 
-### T-28. `/blog` 검색창 + 페이지 버튼
+### T-41. `/blog` 검색창 + 페이지 버튼
 
-**검색어·페이지를 URL 쿼리스트링(`?q=&page=`)으로 관리하세요.**
-→ 새로고침해도, 뒤로가기를 눌러도 상태가 유지되어야 합니다.
+**검색어·페이지를 URL 쿼리스트링(`?q=&page=`)으로 관리하세요.** 서버 컴포넌트의 `searchParams`로 받습니다(클라이언트 상태로 관리하면 검색 결과 페이지가 서버 렌더되지 않습니다).
 
-> ✅ 완료 조건: 2페이지로 이동 → 새로고침 → 여전히 2페이지 / 뒤로가기 → 1페이지
-
----
-
-### T-29. 수리 사례 갤러리 그리드 (메인)
-
-모바일 2열 / 데스크톱 4열. `next/image` + `public/gallery/` 이미지.
-
-> ✅ 완료 조건: 이미지 비율이 깨지지 않고, 모바일에서 2열로 보인다
+> ✅ 완료 조건: 2페이지 이동 → 새로고침 → 여전히 2페이지 / 뒤로가기 → 1페이지
 
 ---
 
-### T-30. 갤러리 라이트박스
+### T-42. 수리 사례 갤러리 그리드 (메인)
 
-클릭 시 모달 — 오버레이 + 좌우 이동 + `ESC`로 닫기.
-**라이브러리 쓰지 말고 직접 구현하세요.** 열려 있는 동안 배경 스크롤 잠금.
+모바일 2열 / 데스크톱 4열. `next/image` + `public/gallery/`. **`alt`에 실제 작업 내용을 쓰세요**(이미지 검색 유입 + 접근성).
 
-> ✅ 완료 조건: 열기 → 좌우 이동 → `ESC`로 닫기가 모두 되고, 배경이 스크롤되지 않는다
-
----
-
-### T-31. 다크 모드
-
-Tailwind `darkMode: 'class'`. 헤더에 토글 버튼.
-선택값은 `localStorage`에 저장, 첫 방문은 `prefers-color-scheme`를 따름.
-**새로고침 시 흰 화면이 번쩍이지 않도록** `<head>`에 인라인 스크립트로 클래스를 미리 붙이세요.
-
-> ✅ 완료 조건: 다크로 바꾸고 새로고침 → 다크 유지 + **흰 화면 깜빡임 없음**
+> ✅ 완료 조건: 이미지 비율이 깨지지 않고 모바일에서 2열 / 모든 이미지에 의미 있는 `alt`가 있다
 
 ---
 
-### T-32. 스크롤 등장 애니메이션
+### T-43. 갤러리 라이트박스
 
-`IntersectionObserver`로 `useInView` 훅 **하나만** 만들어 섹션마다 재사용.
-`opacity` + `translateY` 트랜지션. `prefers-reduced-motion: reduce`면 애니메이션 끄기.
+클릭 시 모달 — 오버레이 + 좌우 이동 + `ESC` 닫기. **라이브러리 없이 직접 구현.** 열려 있는 동안 배경 스크롤 잠금.
+
+> ✅ 완료 조건: 열기 → 좌우 이동 → `ESC` 닫기가 되고 배경이 스크롤되지 않는다
+
+---
+
+### T-44. 다크 모드
+
+Tailwind 다크 모드 + 헤더 토글. `localStorage` 저장, 첫 방문은 `prefers-color-scheme`.
+**새로고침 시 흰 화면이 번쩍이지 않도록** `<head>` 인라인 스크립트로 클래스를 미리 붙이세요.
+
+> ✅ 완료 조건: 다크로 바꾸고 새로고침 → 다크 유지 + 깜빡임 없음
+
+---
+
+### T-45. 스크롤 등장 애니메이션
+
+`IntersectionObserver`로 `useInView` 훅 **하나만** 만들어 재사용. `opacity` + `translateY`.
+`prefers-reduced-motion: reduce`면 끕니다. **본문 텍스트를 초기 `opacity:0`으로 숨기지 마세요** — 크롤러에는 보이지만 사용자에겐 안 보이는 상태가 길어지면 손해입니다. 섹션 래퍼에만 적용하세요.
 
 > ✅ 완료 조건: 스크롤 시 섹션이 순차 등장 / OS "동작 줄이기" 켜면 즉시 표시
 
 ---
 
-### T-33. 장애 대응 (fallback 연락처) ⭐
+### T-46. 장애 대응 (fallback 연락처) ⭐
 
 API가 죽어도 **전화·카톡 버튼은 반드시 눌러져야 합니다.** 실제 고객 문의가 걸린 부분입니다.
-`/api/contact` 실패 시 쓸 **하드코딩 fallback 연락처**를 프론트에 두세요.
-(하드코딩 금지 원칙의 **의도적 예외**입니다)
+`/api/contact` 실패 시 쓸 **하드코딩 fallback 연락처**를 프론트에 두세요. (하드코딩 금지 원칙의 **의도적 예외**)
 나머지 섹션은 실패 시 안내 문구를 표시합니다.
 
 > ✅ 완료 조건: **API를 완전히 끈 채로** 사이트를 열어도 화면이 안 깨지고 전화·카톡 버튼이 동작한다
 
 ---
 
-### T-34. 반응형 점검 + 정리
+### T-47. 반응형 점검 + 정리
 
 | 구분 | 폭 |
 |---|---|
@@ -485,30 +697,28 @@ API가 죽어도 **전화·카톡 버튼은 반드시 눌러져야 합니다.** 
 | 태블릿 | 768~1023px |
 | 데스크톱 | 1024px~ |
 
-> ✅ 완료 조건: 375 / 768 / 1440 세 폭에서 **가로 스크롤바가 생기지 않는다**
+블로그 상세의 **긴 코드/URL이 가로로 삐져나오지 않는지** 특히 확인하세요.
+
+> ✅ 완료 조건: 375 / 768 / 1440 세 폭에서 가로 스크롤바가 생기지 않는다
 
 ---
 
-# 단계 5 — 배포
+# 단계 7 — 배포
 
-### T-35. GitHub push
+### T-48. GitHub push
 
 ```bash
 gh repo create gn-platform --public --source=. --push
 ```
 
-> ✅ 완료 조건: 저장소에 web/api가 모두 올라가 있고 `node_modules`는 없다
+> ✅ 완료 조건: web/api가 올라가 있고 `node_modules`·`.env`·**관리자 비밀번호 해시**가 저장소에 없다
 
 ---
 
-### T-36. `api` 배포 (Railway 또는 Render)
+### T-49. `api` 배포 (Railway 또는 Render)
 
-- Root Directory를 `api`로 지정 (Gradle 자동 인식)
-- yml의 CORS 허용 목록에 **Vercel 도메인 추가** — 안 하면 브라우저에서 전부 막힙니다
-- ⚠️ **무료 플랜은 디스크가 휘발성입니다.** 재배포하면 H2 파일이 날아가 글이 사라집니다.
-  → **운영 프로필만 PostgreSQL로 전환하세요** (Neon / Supabase / Railway 무료 DB).
-  JPA를 썼으니 `application-prod.yml` 추가로 끝나고 코드 수정은 거의 없습니다:
-
+- Root Directory를 `api`로 지정
+- **운영 프로필은 PostgreSQL** (Neon / Supabase / Railway 무료 DB). 무료 플랜 디스크는 휘발성이라 H2 파일은 재배포 때 날아갑니다.
   ```yaml
   spring:
     datasource:
@@ -518,35 +728,49 @@ gh repo create gn-platform --public --source=. --push
       hibernate:
         ddl-auto: update
   ```
-  (`build.gradle.kts`에 `runtimeOnly("org.postgresql:postgresql")` 추가)
+  (`build.gradle.kts`에 `runtimeOnly("org.postgresql:postgresql")`)
+- 환경변수: `DATABASE_URL`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, 스토리지 키
+- yml의 CORS 허용 목록에 **Vercel 도메인 추가**
+- **쿠키 인증 주의**: 도메인이 다르므로 세션 쿠키에 `SameSite=None; Secure`가 필요합니다. 안 하면 **배포 후에만 로그인이 안 됩니다.**
 
-> ✅ 완료 조건: 배포된 주소 + `/api/contact` 가 브라우저에서 JSON을 반환한다
-
----
-
-### T-37. `web` 배포 (Vercel)
-
-- 저장소 연결 후 **Root Directory를 `web`으로 지정**
-- Environment Variables에 `NEXT_PUBLIC_API_BASE_URL` = T-36의 배포 주소
-
-> ✅ 완료 조건: 공개 URL에서 서비스·후기·블로그가 **실제로 보인다** / 콘솔에 CORS 에러 없음
-> ⚠️ 무료 플랜은 콜드 스타트가 있어 첫 접속이 느립니다. T-33의 로딩 표시가 여기서 값을 합니다.
+> ✅ 완료 조건: 배포 주소 `/api/contact`가 JSON을 반환하고, 배포된 웹에서 **관리자 로그인이 실제로 된다**
 
 ---
 
-### T-38. 실기기 최종 검증 ⭐
+### T-50. `web` 배포 (Vercel)
 
-**실제 휴대폰으로** 배포된 사이트를 열고 확인:
+Root Directory를 `web`으로 지정. 환경변수: `NEXT_PUBLIC_API_BASE_URL`(T-49 주소), `NEXT_PUBLIC_SITE_URL`(Vercel 도메인).
+
+> ✅ 완료 조건: 공개 URL에서 서비스·후기·블로그가 실제로 보이고 콘솔에 CORS 에러가 없다
+
+---
+
+### T-51. 실기기 최종 검증 ⭐
+
+**실제 휴대폰으로** 배포된 사이트를 열고:
 
 - [ ] 전화 버튼 → `010-5243-3064` 통화 화면
 - [ ] 카톡 버튼 → 오픈채팅방(`sVPLBe6`) 진입
 - [ ] 하단 고정 CTA 바가 스크롤 내내 보임
-- [ ] 글 작성 → 목록 노출 → 수정 → 삭제
-- [ ] 재배포 후에도 작성한 글이 남아 있음
-
-> ✅ 완료 조건: 위 5개 전부 통과 → **과제 완료**
+- [ ] 관리자 로그인 → 글 작성 → 공개 목록 노출 → 수정 → 삭제
+- [ ] **로그아웃 상태에서 `/admin` 접근 시 막힘**
+- [ ] 재배포 후에도 작성한 글과 업로드한 이미지가 남아 있음
 
 ---
+
+### T-52. 검색엔진 등록 + 색인 검증
+
+실제 유입은 여기서부터 시작합니다. 배포만 하면 아무도 오지 않습니다.
+
+- Google Search Console에 도메인 등록 → `sitemap.xml` 제출
+- 네이버 서치어드바이저에도 동일하게 등록 (국내 유입에서 비중이 큽니다)
+- Rich Results Test로 `LocalBusiness`·`Article` 오류 0건 재확인
+- 카카오톡에 URL을 붙여넣어 **OG 미리보기 카드**가 뜨는지 확인
+
+> ✅ 완료 조건: Search Console에 sitemap이 "성공"으로 읽히고, 배포 URL 검사에서 "색인 생성 가능"이 나온다 → **과제 완료**
+
+---
+
 
 # 부록 A. Claude Code 사용법
 
