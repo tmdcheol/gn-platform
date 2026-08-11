@@ -194,6 +194,27 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("요약이 300자를 넘으면 500이 아니라 400")
+    void tooLongExcerptIsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/admin/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PostRequest("제목", "요".repeat(301), "본문", null, "관리자", true))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.excerpt").value("요약은 300자를 넘을 수 없습니다"));
+    }
+
+    @Test
+    @DisplayName("요약이 정확히 300자면 통과한다")
+    void exactlyThreeHundredIsOk() throws Exception {
+        mockMvc.perform(post("/api/admin/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PostRequest("제목", "요".repeat(300), "본문", null, "관리자", true))))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
     @DisplayName("excerpt 없이 생성하면 본문 앞 150자가 요약으로 들어간다")
     void excerptIsGeneratedWhenMissing() throws Exception {
         String content = "가".repeat(300);
