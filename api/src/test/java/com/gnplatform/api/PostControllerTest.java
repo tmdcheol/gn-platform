@@ -171,7 +171,43 @@ class PostControllerTest {
     }
 
     @Test
-    @DisplayName("없는 id 수정·삭제와 없는 슬러그 조회는 404")
+    @DisplayName("제목이 비면 400")
+    void blankTitleIsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/admin/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PostRequest("  ", "요약", "본문", null, "관리자", true))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.title").value("제목은 필수입니다"));
+    }
+
+    @Test
+    @DisplayName("본문·작성자가 비어도 400")
+    void blankContentOrAuthorIsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/admin/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PostRequest("제목", "요약", null, null, "", true))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.content").value("본문은 필수입니다"))
+                .andExpect(jsonPath("$.fieldErrors.author").value("작성자는 필수입니다"));
+    }
+
+    @Test
+    @DisplayName("excerpt 없이 생성하면 본문 앞 150자가 요약으로 들어간다")
+    void excerptIsGeneratedWhenMissing() throws Exception {
+        String content = "가".repeat(300);
+
+        mockMvc.perform(post("/api/admin/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PostRequest("요약 없는 글", null, content, null, "관리자", true))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.excerpt").value("가".repeat(150)));
+    }
+
+    @Test
+    @DisplayName("없는 슬러그 조회는 500이 아니라 404")
     void notFoundCases() throws Exception {
         mockMvc.perform(get("/api/posts/없는-슬러그"))
                 .andExpect(status().isNotFound());

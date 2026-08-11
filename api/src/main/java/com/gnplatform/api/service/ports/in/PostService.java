@@ -1,7 +1,6 @@
 package com.gnplatform.api.service.ports.in;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.gnplatform.api.dto.PostRequest;
 import com.gnplatform.api.dto.PostResponse;
@@ -16,19 +15,18 @@ public interface PostService {
     /** 공개 목록 — 발행된 글만 최신순. */
     List<PostResponse> getPublishedPosts();
 
-    /** 공개 상세 — 발행된 글만 슬러그로. */
-    Optional<PostResponse> getPublishedPostBySlug(String slug);
+    /** 공개 상세 — 발행된 글만 슬러그로. 없으면 PostNotFoundException. */
+    PostResponse getPublishedPostBySlug(String slug);
 
     /** 관리 목록 — 임시저장 포함 전체, 최신순. */
     List<PostResponse> getAllPosts();
 
-    /** 관리 상세 — 임시저장 포함, id로. */
-    Optional<PostResponse> getPost(Long id);
+    /** 관리 상세 — 임시저장 포함, id로. 없으면 PostNotFoundException. */
+    PostResponse getPost(Long id);
 
     PostResponse create(PostRequest request);
 
-    Optional<PostResponse> update(Long id, PostRequest request);
+    PostResponse update(Long id, PostRequest request);
 
-    /** 삭제됐으면 true, 대상이 없으면 false. */
-    boolean delete(Long id);
+    void delete(Long id);
 }

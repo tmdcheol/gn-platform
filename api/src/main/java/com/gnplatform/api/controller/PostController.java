@@ -2,7 +2,6 @@ package com.gnplatform.api.controller;
 
 import java.util.List;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,9 +29,7 @@ public class PostController {
     }
 
     @GetMapping("/{slug}")
-    public ResponseEntity<PostResponse> getPost(@PathVariable String slug) {
-        return postService.getPublishedPostBySlug(slug)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public PostResponse getPost(@PathVariable String slug) {
+        return postService.getPublishedPostBySlug(slug);
     }
 }

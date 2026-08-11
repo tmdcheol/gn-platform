@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.validation.Valid;
+
 import com.gnplatform.api.dto.PostRequest;
 import com.gnplatform.api.dto.PostResponse;
 import com.gnplatform.api.service.ports.in.PostService;
@@ -37,29 +39,24 @@ public class AdminPostController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PostResponse> getPost(@PathVariable Long id) {
-        return postService.getPost(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public PostResponse getPost(@PathVariable Long id) {
+        return postService.getPost(id);
     }
 
     @PostMapping
-    public ResponseEntity<PostResponse> create(@RequestBody PostRequest request) {
+    public ResponseEntity<PostResponse> create(@Valid @RequestBody PostRequest request) {
         PostResponse created = postService.create(request);
         return ResponseEntity.created(URI.create("/api/admin/posts/" + created.id())).body(created);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PostResponse> update(@PathVariable Long id, @RequestBody PostRequest request) {
-        return postService.update(id, request)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    public PostResponse update(@PathVariable Long id, @Valid @RequestBody PostRequest request) {
+        return postService.update(id, request);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
-        return postService.delete(id)
-                ? ResponseEntity.noContent().build()
-                : ResponseEntity.notFound().build();
+        postService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

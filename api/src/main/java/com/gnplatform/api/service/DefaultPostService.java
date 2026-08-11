@@ -1,12 +1,13 @@
 package com.gnplatform.api.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.gnplatform.api.domain.ExcerptGenerator;
 import com.gnplatform.api.domain.Post;
+import com.gnplatform.api.domain.PostNotFoundException;
 import com.gnplatform.api.domain.SlugGenerator;
 import com.gnplatform.api.dto.PostRequest;
 import com.gnplatform.api.dto.PostResponse;
@@ -44,8 +45,10 @@ public class DefaultPostService implements PostService {
     }
 
     @Override
-    public Optional<PostResponse> getPublishedPostBySlug(String slug) {
-        return postRepository.findBySlugAndPublishedTrue(slug).map(PostResponse::from);
+    public PostResponse getPublishedPostBySlug(String slug) {
+        return postRepository.findBySlugAndPublishedTrue(slug)
+                .map(PostResponse::from)
+                .orElseThrow(() -> PostNotFoundException.bySlug(slug));
     }
 
     @Override
@@ -56,8 +59,8 @@ public class DefaultPostService implements PostService {
     }
 
     @Override
-    public Optional<PostResponse> getPost(Long id) {
-        return postRepository.findById(id).map(PostResponse::from);
+    public PostResponse getPost(Long id) {
+        return PostResponse.from(findPost(id));
     }
 
     @Override
@@ -66,7 +69,7 @@ public class DefaultPostService implements PostService {
         Post post = Post.builder()
                 .slug(generateUniqueSlug(request.title()))
                 .title(request.title())
-                .excerpt(request.excerpt())
+                .excerpt(ExcerptGenerator.generate(request.excerpt(), request.content()))
                 .content(request.content())
                 .thumbnailUrl(request.thumbnailUrl())
                 .author(request.author())
@@ -78,28 +81,32 @@ public class DefaultPostService implements PostService {
 
     @Override
     @Transactional
-    public Optional<PostResponse> update(Long id, PostRequest request) {
-        return postRepository.findById(id).map(post -> {
-            // 제목이 바뀌어도 슬러그는 유지합니다 — URL이 바뀌면 색인이 날아갑니다.
-            post.update(request.title(), request.excerpt(), request.content(), request.thumbnailUrl());
-            if (request.published() != post.isPublished()) {
-                if (request.published()) {
-                    post.publish();
-                } else {
-                    post.unpublish();
-                }
+    public PostResponse update(Long id, PostRequest request) {
+        Post post = findPost(id);
+
+        // 제목이 바뀌어도 슬러그는 유지합니다 — URL이 바뀌면 색인이 날아갑니다.
+        post.update(request.title(),
+                ExcerptGenerator.generate(request.excerpt(), request.content()),
+                request.content(),
+                request.thumbnailUrl());
+        if (request.published() != post.isPublished()) {
+            if (request.published()) {
+                post.publish();
+            } else {
+                post.unpublish();
             }
-            return PostResponse.from(post);
-        });
+        }
+        return PostResponse.from(post);
     }
 
     @Override
     @Transactional
-    public boolean delete(Long id) {
-        if (!postRepository.existsById(id)) {
-            return false;
-        }
-        postRepository.deleteById(id);
-        return true;
+    public void delete(Long id) {
+        postRepository.delete(findPost(id));
+    }
+
+    private Post findPost(Long id) {
+        return postRepository.findById(id)
+                .orElseThrow(() -> PostNotFoundException.byId(id));
     }
 }
