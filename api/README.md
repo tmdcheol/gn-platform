@@ -6,9 +6,14 @@
 |---|---|
 | `ADMIN_USERNAME` | 관리자 아이디 |
 | `ADMIN_PASSWORD_HASH` | 관리자 비밀번호의 **BCrypt 해시**. 평문이 아닙니다 |
+| `SUPABASE_URL` | 예: `https://xxxx.supabase.co` |
+| `SUPABASE_BUCKET` | 이미지 버킷 이름. **공개(public) 버킷이어야 반환된 URL이 열립니다** |
+| `SUPABASE_SERVICE_KEY` | 스토리지 service role 키. 커밋 금지 |
 
 ```bash
-ADMIN_USERNAME=admin ADMIN_PASSWORD_HASH='$2a$10$...' ./gradlew bootRun
+ADMIN_USERNAME=admin ADMIN_PASSWORD_HASH='$2a$10$...' \
+  SUPABASE_URL=https://xxxx.supabase.co SUPABASE_BUCKET=images SUPABASE_SERVICE_KEY=... \
+  ./gradlew bootRun
 ```
 
 해시는 아래처럼 만들 수 있습니다 (`'`로 감싸야 `$`가 셸에서 치환되지 않습니다).

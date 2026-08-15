@@ -10,7 +10,10 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import com.gnplatform.api.domain.InvalidImageException;
 import com.gnplatform.api.domain.PostNotFoundException;
 import com.gnplatform.api.dto.ErrorResponse;
 
@@ -21,6 +24,24 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleNotFound(PostNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(e.getMessage(), Map.of()));
+    }
+
+    @ExceptionHandler(InvalidImageException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidImage(InvalidImageException e) {
+        return ResponseEntity.badRequest().body(new ErrorResponse(e.getMessage(), Map.of()));
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ErrorResponse> handleTooLargeUpload(MaxUploadSizeExceededException e) {
+        return ResponseEntity.badRequest()
+                .body(new ErrorResponse("이미지는 5MB를 넘을 수 없습니다", Map.of()));
+    }
+
+    @ExceptionHandler(RestClientException.class)
+    public ResponseEntity<ErrorResponse> handleStorageFailure(RestClientException e) {
+        // 스토리지가 응답하지 않거나 키가 잘못된 경우. 클라이언트 잘못이 아니므로 502.
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(new ErrorResponse("이미지 저장소에 업로드하지 못했습니다", Map.of()));
     }
 
     @ExceptionHandler(AuthenticationException.class)

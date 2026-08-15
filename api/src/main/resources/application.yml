@@ -13,11 +13,19 @@ spring:
   h2:
     console:
       enabled: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
 
 app:
   admin:
     username: ${ADMIN_USERNAME}
     password-hash: ${ADMIN_PASSWORD_HASH}   # BCrypt 해시. 평문 금지
+  storage:
+    url: ${SUPABASE_URL}
+    bucket: ${SUPABASE_BUCKET}
+    service-key: ${SUPABASE_SERVICE_KEY}   # 값은 환경변수로만. 커밋 금지
   cors:
     allowed-origins:
       - http://localhost:3000

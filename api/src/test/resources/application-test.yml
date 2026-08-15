@@ -18,3 +18,7 @@ app:
     username: test-admin
     password: test-admin-password-1234
     password-hash: $2a$10$rpUKHIbAmTNclyuxW8jTu..jYAkSC0FoL0A1BYl4M8427epv/NhZO
+  storage:
+    url: https://test.supabase.invalid
+    bucket: test-bucket
+    service-key: test-service-key
