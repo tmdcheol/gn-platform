@@ -107,7 +107,7 @@ class AdminPostSecurityTest {
     }
 
     @Test
-    @DisplayName("쿠키 없이 POST /api/admin/posts → 401, 로그인 후 → 201")
+    @DisplayName("CSRF 토큰만 있고 세션이 없는 POST /api/admin/posts → 401, 로그인 후 → 201")
     void create() throws Exception {
         mockMvc.perform(post("/api/admin/posts").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -121,7 +121,7 @@ class AdminPostSecurityTest {
     }
 
     @Test
-    @DisplayName("쿠키 없이 PUT /api/admin/posts/{id} → 401, 로그인 후 → 200")
+    @DisplayName("CSRF 토큰만 있고 세션이 없는 PUT /api/admin/posts/{id} → 401, 로그인 후 → 200")
     void update() throws Exception {
         Long id = savePost();
 
@@ -137,7 +137,7 @@ class AdminPostSecurityTest {
     }
 
     @Test
-    @DisplayName("쿠키 없이 DELETE /api/admin/posts/{id} → 401, 로그인 후 → 204")
+    @DisplayName("CSRF 토큰만 있고 세션이 없는 DELETE /api/admin/posts/{id} → 401, 로그인 후 → 204")
     void delete_() throws Exception {
         Long id = savePost();
 
@@ -149,7 +149,7 @@ class AdminPostSecurityTest {
     }
 
     @Test
-    @DisplayName("비인증 쓰기 요청이 401로 막히면 글이 실제로 생기지 않는다")
+    @DisplayName("비인증 쓰기 요청이 막히면 글이 실제로 생기지 않는다")
     void unauthenticatedWriteDoesNotPersist() throws Exception {
         mockMvc.perform(post("/api/admin/posts").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
@@ -170,6 +170,22 @@ class AdminPostSecurityTest {
         mockMvc.perform(get("/api/contact")).andExpect(status().isOk());
         mockMvc.perform(get("/api/services")).andExpect(status().isOk());
         mockMvc.perform(get("/api/reviews")).andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("쿠키가 전혀 없는 쓰기 요청은 401이 아니라 403이다")
+    void writeWithoutAnyCookieIsForbidden() throws Exception {
+        // CsrfFilter가 인가 필터보다 앞에 있어, 토큰이 없으면 인증 여부를 판단하기 전에 막힙니다.
+        // 완료 조건 문구는 401이지만 실제 동작은 403이며, 차단된다는 점은 같습니다.
+        // 프론트는 세션 만료를 다룰 때 401과 403을 모두 재로그인으로 처리해야 합니다.
+        mockMvc.perform(post("/api/admin/posts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body()))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.message").value("접근 권한이 없습니다"));
+
+        mockMvc.perform(get("/api/posts"))
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     @Test
