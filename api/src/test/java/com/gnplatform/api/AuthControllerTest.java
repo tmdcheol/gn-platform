@@ -66,6 +66,21 @@ class AuthControllerTest {
     }
 
     @Test
+    @DisplayName("로그인하면 기존 세션 ID를 그대로 쓰지 않는다 (세션 고정 방지)")
+    void loginChangesSessionId() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        String before = session.getId();
+
+        MvcResult result = mockMvc.perform(post("/api/auth/login").with(csrf()).session(session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body(username, password)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertThat(result.getRequest().getSession(false).getId()).isNotEqualTo(before);
+    }
+
+    @Test
     @DisplayName("틀린 비밀번호로 로그인하면 401")
     void loginFailure() throws Exception {
         mockMvc.perform(post("/api/auth/login").with(csrf())
