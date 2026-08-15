@@ -44,6 +44,9 @@ public class DefaultImageService implements ImageService {
         restClient.post()
                 .uri("%s/storage/v1/object/%s/%s".formatted(
                         storageProperties.url(), storageProperties.bucket(), objectPath))
+                // sb_secret_ 형식의 키는 apikey 헤더가 함께 있어야 합니다.
+                // Authorization만 보내면 JWT로 해석돼 Invalid Compact JWS로 거부됩니다.
+                .header("apikey", storageProperties.serviceKey())
                 .header("Authorization", "Bearer " + storageProperties.serviceKey())
                 .contentType(MediaType.parseMediaType(file.getContentType()))
                 .body(bytes)
