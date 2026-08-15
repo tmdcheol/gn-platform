@@ -1,8 +1,11 @@
 export type RepairService = {
   id: number;
+  slug: string;
   title: string;
   description: string;
   icon: string;
+  longDescription: string;
+  symptoms: string[];
 };
 
 export type Post = {
