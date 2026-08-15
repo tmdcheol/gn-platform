@@ -7,3 +7,12 @@ export function formatDate(isoLocalDateTime: string) {
 
   return `${year}.${month}.${day}`;
 }
+
+/**
+ * 사이트맵 lastmod용 날짜(YYYY-MM-DD). 사이트맵 규격이 허용하는 형식입니다.
+ * 시각까지 넣으려면 API가 준 벽시계 시간이 어느 시간대인지 알아야 하는데,
+ * 서버 시간대가 갈리면 9시간씩 어긋납니다. 알 수 없는 값을 지어내는 대신 날짜만 씁니다.
+ */
+export function toSitemapDate(isoLocalDateTime: string) {
+  return isoLocalDateTime.slice(0, 10);
+}

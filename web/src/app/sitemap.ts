@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { toSitemapDate } from "@/lib/date";
 import { getPosts, getServices } from "@/lib/data";
 import { siteUrl } from "@/lib/site";
 
@@ -13,16 +14,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
   const [posts, services] = await Promise.all([getPosts(), getServices()]);
 
+  // 목록의 최신성은 가장 최근에 수정된 글이 알려줍니다.
+  // 메인은 근거가 될 신호가 없어 lastmod를 붙이지 않습니다 —
+  // new Date()를 쓰면 요청마다 "방금 수정됨"이 되어 신호가 무의미해집니다.
+  const latestPostUpdate = (posts ?? [])
+    .map((post) => post.updatedAt)
+    .sort()
+    .at(-1);
+
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: base,
-      lastModified: new Date(),
       changeFrequency: "weekly",
       priority: 1,
     },
     {
       url: `${base}/blog`,
-      lastModified: new Date(),
+      ...(latestPostUpdate
+        ? { lastModified: toSitemapDate(latestPostUpdate) }
+        : {}),
       changeFrequency: "daily",
       priority: 0.8,
     },
@@ -38,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const postRoutes: MetadataRoute.Sitemap = (posts ?? []).map((post) => ({
     url: `${base}/blog/${encodeURIComponent(post.slug)}`,
-    lastModified: new Date(post.updatedAt),
+    lastModified: toSitemapDate(post.updatedAt),
     changeFrequency: "monthly",
     priority: 0.6,
   }));
