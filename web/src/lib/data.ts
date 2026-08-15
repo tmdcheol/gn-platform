@@ -1,4 +1,4 @@
-import { apiFetch } from "@/lib/api";
+import { ApiError, apiFetch } from "@/lib/api";
 import type { Contact, Post, RepairService, Review } from "@/lib/types";
 
 /**
@@ -46,6 +46,41 @@ export async function getPosts(): Promise<Post[] | null> {
     return await apiFetch<Post[]>("/api/posts", { cache: "no-store" });
   } catch (error) {
     console.error("[api] /api/posts 조회 실패", error);
+    return null;
+  }
+}
+
+/**
+ * 슬러그는 한글이라 URL에서 퍼센트 인코딩됩니다.
+ * params가 이미 인코딩된 값을 주는 경우가 있어, 그대로 다시 인코딩하면 %EB가 %25EB가 됩니다.
+ * 한 번 디코딩해 원문으로 되돌린 뒤 인코딩합니다.
+ */
+function encodeSlug(slug: string) {
+  let decoded = slug;
+  try {
+    decoded = decodeURIComponent(slug);
+  } catch {
+    // 디코딩할 수 없는 문자열이면 원본을 그대로 씁니다.
+  }
+  return encodeURIComponent(decoded);
+}
+
+/**
+ * 글 상세. 세 가지 결과를 구분합니다.
+ * - Post: 발행된 글
+ * - "not-found": 없는 슬러그이거나 임시저장 글 → 404 화면
+ * - null: API 장애 → 404가 아니라 오류 안내 (없는 글로 오인해 색인이 빠지면 안 됩니다)
+ */
+export async function getPost(slug: string): Promise<Post | "not-found" | null> {
+  try {
+    return await apiFetch<Post>(`/api/posts/${encodeSlug(slug)}`, {
+      cache: "no-store",
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return "not-found";
+    }
+    console.error(`[api] /api/posts/${slug} 조회 실패`, error);
     return null;
   }
 }
