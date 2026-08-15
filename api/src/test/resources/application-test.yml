@@ -11,3 +11,10 @@ spring:
   h2:
     console:
       enabled: false
+
+# 테스트 전용 계정. 운영 값은 환경변수로만 주입합니다.
+app:
+  admin:
+    username: test-admin
+    password: test-admin-password-1234
+    password-hash: $2a$10$rpUKHIbAmTNclyuxW8jTu..jYAkSC0FoL0A1BYl4M8427epv/NhZO

@@ -1,6 +1,7 @@
 package com.gnplatform.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -68,7 +69,7 @@ class PostControllerTest {
     @Test
     @DisplayName("생성 → 슬러그로 조회 → 수정 → 삭제가 되고, 삭제한 슬러그 조회는 404")
     void fullLifecycle() throws Exception {
-        String location = mockMvc.perform(post("/api/admin/posts")
+        String location = mockMvc.perform(post("/api/admin/posts").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("윙바디 유압 누유, 원인 3가지", true)))
                 .andExpect(status().isCreated())
@@ -82,13 +83,13 @@ class PostControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("윙바디 유압 누유, 원인 3가지"));
 
-        mockMvc.perform(put("/api/admin/posts/" + id)
+        mockMvc.perform(put("/api/admin/posts/" + id).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("제목을 바꿨습니다", true)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("제목을 바꿨습니다"));
 
-        mockMvc.perform(delete("/api/admin/posts/" + id))
+        mockMvc.perform(delete("/api/admin/posts/" + id).with(csrf()))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/posts/윙바디-유압-누유-원인-3가지"))
@@ -100,7 +101,7 @@ class PostControllerTest {
     void slugSurvivesTitleChange() throws Exception {
         Long id = savePost("윙바디 유압 누유", "윙바디-유압-누유", true);
 
-        mockMvc.perform(put("/api/admin/posts/" + id)
+        mockMvc.perform(put("/api/admin/posts/" + id).with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("완전히 다른 제목", true)))
                 .andExpect(status().isOk())
@@ -173,7 +174,7 @@ class PostControllerTest {
     @Test
     @DisplayName("제목이 비면 400")
     void blankTitleIsBadRequest() throws Exception {
-        mockMvc.perform(post("/api/admin/posts")
+        mockMvc.perform(post("/api/admin/posts").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new PostRequest("  ", "요약", "본문", null, "관리자", true))))
@@ -184,7 +185,7 @@ class PostControllerTest {
     @Test
     @DisplayName("본문·작성자가 비어도 400")
     void blankContentOrAuthorIsBadRequest() throws Exception {
-        mockMvc.perform(post("/api/admin/posts")
+        mockMvc.perform(post("/api/admin/posts").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new PostRequest("제목", "요약", null, null, "", true))))
@@ -196,7 +197,7 @@ class PostControllerTest {
     @Test
     @DisplayName("요약이 300자를 넘으면 500이 아니라 400")
     void tooLongExcerptIsBadRequest() throws Exception {
-        mockMvc.perform(post("/api/admin/posts")
+        mockMvc.perform(post("/api/admin/posts").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new PostRequest("제목", "요".repeat(301), "본문", null, "관리자", true))))
@@ -207,7 +208,7 @@ class PostControllerTest {
     @Test
     @DisplayName("요약이 정확히 300자면 통과한다")
     void exactlyThreeHundredIsOk() throws Exception {
-        mockMvc.perform(post("/api/admin/posts")
+        mockMvc.perform(post("/api/admin/posts").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new PostRequest("제목", "요".repeat(300), "본문", null, "관리자", true))))
@@ -219,7 +220,7 @@ class PostControllerTest {
     void excerptIsGeneratedWhenMissing() throws Exception {
         String content = "가".repeat(300);
 
-        mockMvc.perform(post("/api/admin/posts")
+        mockMvc.perform(post("/api/admin/posts").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new PostRequest("요약 없는 글", null, content, null, "관리자", true))))
@@ -236,12 +237,12 @@ class PostControllerTest {
         mockMvc.perform(get("/api/admin/posts/9999"))
                 .andExpect(status().isNotFound());
 
-        mockMvc.perform(put("/api/admin/posts/9999")
+        mockMvc.perform(put("/api/admin/posts/9999").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("제목", true)))
                 .andExpect(status().isNotFound());
 
-        mockMvc.perform(delete("/api/admin/posts/9999"))
+        mockMvc.perform(delete("/api/admin/posts/9999").with(csrf()))
                 .andExpect(status().isNotFound());
     }
 }

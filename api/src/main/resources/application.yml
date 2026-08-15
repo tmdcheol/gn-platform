@@ -15,6 +15,9 @@ spring:
       enabled: true
 
 app:
+  admin:
+    username: ${ADMIN_USERNAME}
+    password-hash: ${ADMIN_PASSWORD_HASH}   # BCrypt 해시. 평문 금지
   cors:
     allowed-origins:
       - http://localhost:3000
