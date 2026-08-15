@@ -15,14 +15,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
 import tools.jackson.databind.ObjectMapper;
 import com.gnplatform.api.domain.Post;
+import com.gnplatform.api.dto.LoginRequest;
 import com.gnplatform.api.dto.PostRequest;
 import com.gnplatform.api.repository.PostRepository;
 
@@ -42,6 +45,23 @@ class PostControllerTest {
 
     @Autowired
     JdbcTemplate jdbcTemplate;
+
+    @Value("${app.admin.username}")
+    String adminUsername;
+
+    @Value("${app.admin.password}")
+    String adminPassword;
+
+    /** 관리 경로는 인증이 필요합니다. 목 대신 실제 로그인으로 세션을 얻습니다. */
+    private MockHttpSession login() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+        mockMvc.perform(post("/api/auth/login").with(csrf()).session(session)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new LoginRequest(adminUsername, adminPassword))))
+                .andExpect(status().isOk());
+        return session;
+    }
 
     // MockMvc 테스트는 트랜잭션 롤백이 되지 않으므로 다른 테스트에 데이터가 새지 않도록 직접 지웁니다.
     @BeforeEach
@@ -69,7 +89,7 @@ class PostControllerTest {
     @Test
     @DisplayName("생성 → 슬러그로 조회 → 수정 → 삭제가 되고, 삭제한 슬러그 조회는 404")
     void fullLifecycle() throws Exception {
-        String location = mockMvc.perform(post("/api/admin/posts").with(csrf())
+        String location = mockMvc.perform(post("/api/admin/posts").with(csrf()).session(login())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("윙바디 유압 누유, 원인 3가지", true)))
                 .andExpect(status().isCreated())
@@ -83,13 +103,13 @@ class PostControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("윙바디 유압 누유, 원인 3가지"));
 
-        mockMvc.perform(put("/api/admin/posts/" + id).with(csrf())
+        mockMvc.perform(put("/api/admin/posts/" + id).with(csrf()).session(login())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("제목을 바꿨습니다", true)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("제목을 바꿨습니다"));
 
-        mockMvc.perform(delete("/api/admin/posts/" + id).with(csrf()))
+        mockMvc.perform(delete("/api/admin/posts/" + id).with(csrf()).session(login()))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/posts/윙바디-유압-누유-원인-3가지"))
@@ -101,7 +121,7 @@ class PostControllerTest {
     void slugSurvivesTitleChange() throws Exception {
         Long id = savePost("윙바디 유압 누유", "윙바디-유압-누유", true);
 
-        mockMvc.perform(put("/api/admin/posts/" + id).with(csrf())
+        mockMvc.perform(put("/api/admin/posts/" + id).with(csrf()).session(login())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("완전히 다른 제목", true)))
                 .andExpect(status().isOk())
@@ -121,7 +141,7 @@ class PostControllerTest {
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].slug").value("발행된-글"));
 
-        mockMvc.perform(get("/api/admin/posts"))
+        mockMvc.perform(get("/api/admin/posts").session(login()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2));
     }
@@ -140,7 +160,7 @@ class PostControllerTest {
     void draftVisibleInAdminDetail() throws Exception {
         Long id = savePost("임시저장 글", "임시저장-글", false);
 
-        mockMvc.perform(get("/api/admin/posts/" + id))
+        mockMvc.perform(get("/api/admin/posts/" + id).session(login()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.published").value(false));
     }
@@ -174,7 +194,7 @@ class PostControllerTest {
     @Test
     @DisplayName("제목이 비면 400")
     void blankTitleIsBadRequest() throws Exception {
-        mockMvc.perform(post("/api/admin/posts").with(csrf())
+        mockMvc.perform(post("/api/admin/posts").with(csrf()).session(login())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new PostRequest("  ", "요약", "본문", null, "관리자", true))))
@@ -185,7 +205,7 @@ class PostControllerTest {
     @Test
     @DisplayName("본문·작성자가 비어도 400")
     void blankContentOrAuthorIsBadRequest() throws Exception {
-        mockMvc.perform(post("/api/admin/posts").with(csrf())
+        mockMvc.perform(post("/api/admin/posts").with(csrf()).session(login())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new PostRequest("제목", "요약", null, null, "", true))))
@@ -197,7 +217,7 @@ class PostControllerTest {
     @Test
     @DisplayName("요약이 300자를 넘으면 500이 아니라 400")
     void tooLongExcerptIsBadRequest() throws Exception {
-        mockMvc.perform(post("/api/admin/posts").with(csrf())
+        mockMvc.perform(post("/api/admin/posts").with(csrf()).session(login())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new PostRequest("제목", "요".repeat(301), "본문", null, "관리자", true))))
@@ -208,7 +228,7 @@ class PostControllerTest {
     @Test
     @DisplayName("요약이 정확히 300자면 통과한다")
     void exactlyThreeHundredIsOk() throws Exception {
-        mockMvc.perform(post("/api/admin/posts").with(csrf())
+        mockMvc.perform(post("/api/admin/posts").with(csrf()).session(login())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new PostRequest("제목", "요".repeat(300), "본문", null, "관리자", true))))
@@ -220,7 +240,7 @@ class PostControllerTest {
     void excerptIsGeneratedWhenMissing() throws Exception {
         String content = "가".repeat(300);
 
-        mockMvc.perform(post("/api/admin/posts").with(csrf())
+        mockMvc.perform(post("/api/admin/posts").with(csrf()).session(login())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(
                                 new PostRequest("요약 없는 글", null, content, null, "관리자", true))))
@@ -234,15 +254,15 @@ class PostControllerTest {
         mockMvc.perform(get("/api/posts/없는-슬러그"))
                 .andExpect(status().isNotFound());
 
-        mockMvc.perform(get("/api/admin/posts/9999"))
+        mockMvc.perform(get("/api/admin/posts/9999").session(login()))
                 .andExpect(status().isNotFound());
 
-        mockMvc.perform(put("/api/admin/posts/9999").with(csrf())
+        mockMvc.perform(put("/api/admin/posts/9999").with(csrf()).session(login())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body("제목", true)))
                 .andExpect(status().isNotFound());
 
-        mockMvc.perform(delete("/api/admin/posts/9999").with(csrf()))
+        mockMvc.perform(delete("/api/admin/posts/9999").with(csrf()).session(login()))
                 .andExpect(status().isNotFound());
     }
 }
