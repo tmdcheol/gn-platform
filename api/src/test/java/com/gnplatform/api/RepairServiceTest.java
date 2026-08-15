@@ -79,10 +79,9 @@ class RepairServiceTest {
         List<RepairResponse> repairs = repairService.getRepairs();
 
         assertThat(repairs).allSatisfy(repair -> {
-            long paragraphs = repair.longDescription().lines()
-                    .filter(line -> !line.isBlank())
-                    .count();
-            assertThat(paragraphs).isBetween(3L, 5L);
+            // 빈 줄로 문단을 나눕니다. 한 문단을 여러 줄에 나눠 써도 결과가 같습니다.
+            String[] paragraphs = repair.longDescription().strip().split("\\n\\s*\\n");
+            assertThat(paragraphs).hasSizeBetween(3, 5);
         });
     }
 

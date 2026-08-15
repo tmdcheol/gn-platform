@@ -80,7 +80,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/admin/**").authenticated()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/posts/**", "/api/contact", "/api/services", "/api/reviews")
+                        .requestMatchers("/api/posts/**", "/api/services/**", "/api/contact", "/api/reviews")
                         .permitAll()
                         .anyRequest().permitAll())
                 // API이므로 로그인 페이지로 리다이렉트하지 않고 JSON 상태코드로 응답합니다.
