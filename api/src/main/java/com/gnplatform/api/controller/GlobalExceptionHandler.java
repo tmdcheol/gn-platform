@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 import com.gnplatform.api.domain.InvalidImageException;
 import com.gnplatform.api.domain.PostNotFoundException;
+import com.gnplatform.api.domain.RepairNotFoundException;
 import com.gnplatform.api.dto.ErrorResponse;
 
 @RestControllerAdvice
@@ -22,6 +23,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(PostNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(PostNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(new ErrorResponse(e.getMessage(), Map.of()));
+    }
+
+    @ExceptionHandler(RepairNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleRepairNotFound(RepairNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(new ErrorResponse(e.getMessage(), Map.of()));
     }
