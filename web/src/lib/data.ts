@@ -1,5 +1,5 @@
 import { apiFetch } from "@/lib/api";
-import type { Contact, RepairService, Review } from "@/lib/types";
+import type { Contact, Post, RepairService, Review } from "@/lib/types";
 
 /**
  * 화면용 조회 함수. 실패를 예외로 던지지 않고 null로 돌려주므로,
@@ -34,4 +34,18 @@ export function getServices() {
 
 export function getReviews() {
   return readOrNull<Review[]>("/api/reviews");
+}
+
+/**
+ * 글 목록은 관리자가 발행하면 바로 보여야 하므로 캐시하지 않습니다.
+ * no-store를 명시해야 빌드 시점에 정적으로 구워지지 않습니다 — 구워지면 발행이 늦게 반영되고,
+ * 빌드할 때 API가 꺼져 있으면 에러 화면이 그대로 박힙니다.
+ */
+export async function getPosts(): Promise<Post[] | null> {
+  try {
+    return await apiFetch<Post[]>("/api/posts", { cache: "no-store" });
+  } catch (error) {
+    console.error("[api] /api/posts 조회 실패", error);
+    return null;
+  }
 }
