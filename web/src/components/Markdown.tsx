@@ -14,16 +14,18 @@ export default function Markdown({ children }: { children: string }) {
       remarkPlugins={[remarkGfm]}
       components={{
         // 외부 링크는 새 탭으로 열되, 탭 하이재킹을 막습니다.
-        a: ({ href, children: linkChildren, ...props }) => {
+        // 넘어온 props를 그대로 펼치면 mdast 노드가 node="[object Object]"로 DOM에 찍힙니다.
+        // 필요한 속성만 명시적으로 내려줍니다.
+        a: ({ href, title, children: linkChildren }) => {
           const isExternal = href?.startsWith("http");
 
           return (
             <a
               href={href}
+              title={title}
               {...(isExternal
                 ? { target: "_blank", rel: "noopener noreferrer" }
                 : {})}
-              {...props}
             >
               {linkChildren}
             </a>
