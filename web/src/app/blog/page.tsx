@@ -1,10 +1,28 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 
 import DataError from "@/components/DataError";
 import { formatDate } from "@/lib/date";
 import { getPosts } from "@/lib/data";
+import { OPEN_GRAPH_DEFAULTS } from "@/lib/site";
 import type { Post } from "@/lib/types";
+
+const DESCRIPTION =
+  "탑차·윙바디·냉동탑·리프트에서 자주 나오는 증상과 점검 방법을 정비 현장 기준으로 정리했습니다.";
+
+export const metadata: Metadata = {
+  title: "특장차 정비 이야기와 수리 사례",
+  description: DESCRIPTION,
+  alternates: { canonical: "/blog" },
+  openGraph: {
+    ...OPEN_GRAPH_DEFAULTS,
+    title: "특장차 정비 이야기와 수리 사례 | GN특장",
+    description: DESCRIPTION,
+    url: "/blog",
+    type: "website",
+  },
+};
 
 // 데스크톱 3열 / 모바일 1열.
 const GRID_CLASS = "mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3";

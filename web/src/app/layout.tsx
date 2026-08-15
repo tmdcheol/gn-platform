@@ -6,6 +6,7 @@ import "./globals.css";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import MobileCtaBar from "@/components/MobileCtaBar";
+import { SITE_NAME, siteUrl } from "@/lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,16 +15,16 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
+  // 상대 경로로 쓴 canonical·og:image를 절대 URL로 만들어 줍니다.
+  metadataBase: new URL(siteUrl()),
   title: {
-    default: "GN특장 | 탑차·윙바디·냉동탑·리프트 수리 전문",
-    template: "%s | GN특장",
+    default: `${SITE_NAME} | 탑차·윙바디·냉동탑·리프트 수리 전문`,
+    template: `%s | ${SITE_NAME}`,
   },
   description:
     "광주 광산구 특장차 수리 전문점. 무료 대차, 전국 무료 픽업, 전국 견인.",
   openGraph: {
-    title: "GN특장 | 탑차·윙바디·냉동탑·리프트 수리 전문",
-    description:
-      "광주 광산구 특장차 수리 전문점. 무료 대차, 전국 무료 픽업, 전국 견인.",
+    siteName: SITE_NAME,
     locale: "ko_KR",
     type: "website",
   },
