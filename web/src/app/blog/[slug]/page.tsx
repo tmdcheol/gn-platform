@@ -18,6 +18,9 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await getPost(slug);
 
+  // 타입을 좁히기 위한 분기입니다. 페이지가 notFound()를 부르면 not-found.tsx가 렌더되고
+  // 이 title은 버려집니다(404 화면 제목은 layout 기본값, noindex는 Next가 붙입니다).
+  // 404 제목을 바꾸려면 여기가 아니라 not-found.tsx를 고쳐야 합니다.
   if (post === "not-found") {
     return { title: "글을 찾을 수 없습니다" };
   }
