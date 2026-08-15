@@ -67,7 +67,8 @@ function PostCard({ post }: { post: Post }) {
       <div className="flex flex-1 flex-col p-6">
         <h2 className="text-lg font-bold tracking-tight">{post.title}</h2>
         <p className="mt-2 line-clamp-3 text-muted">{post.excerpt}</p>
-        <time dateTime={post.createdAt} className="mt-4 text-sm text-muted">
+        {/* mt-auto: 제목이 두 줄인 카드가 섞여도 날짜가 카드 바닥에 붙어 행끼리 정렬됩니다. */}
+        <time dateTime={post.createdAt} className="mt-auto pt-4 text-sm text-muted">
           {formatDate(post.createdAt)}
         </time>
       </div>

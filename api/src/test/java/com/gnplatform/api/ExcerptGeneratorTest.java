@@ -47,8 +47,9 @@ class ExcerptGeneratorTest {
                 **호스 노후**가 가장 흔한 원인입니다. [점검 항목](/blog/점검)을 참고하세요.
                 """;
 
+        // 소제목(#)은 문장이 아니라 이정표라 요약에서 뺍니다.
         assertThat(ExcerptGenerator.generate(null, content))
-                .isEqualTo("윙바디 유압 누유, 원인 3가지 호스 노후가 가장 흔한 원인입니다. 점검 항목을 참고하세요.");
+                .isEqualTo("호스 노후가 가장 흔한 원인입니다. 점검 항목을 참고하세요.");
     }
 
     @Test
@@ -66,14 +67,43 @@ class ExcerptGeneratorTest {
                 """;
 
         assertThat(ExcerptGenerator.generate(null, content))
-                .isEqualTo("정비 전 확인하세요 유압 호스 상태 오일 잔량");
+                .isEqualTo("정비 전 확인하세요. 유압 호스 상태. 오일 잔량");
+    }
+
+    @Test
+    @DisplayName("소제목·목록이 문장처럼 이어붙지 않는다")
+    void separatesBlocks() {
+        String content = """
+                윙바디는 날개가 맞물리는 부위에 고무 몰딩이 들어갑니다.
+
+                ## 증상
+
+                - 비가 오면 물이 들어온다
+                - 닫아도 틈이 보인다
+                """;
+
+        assertThat(ExcerptGenerator.generate(null, content))
+                .isEqualTo("윙바디는 날개가 맞물리는 부위에 고무 몰딩이 들어갑니다. 비가 오면 물이 들어온다. 닫아도 틈이 보인다");
+    }
+
+    @Test
+    @DisplayName("여러 줄로 쓴 한 문단은 중간에 끊기지 않는다")
+    void doesNotBreakWrappedParagraph() {
+        String content = """
+                냉동탑을 쓰다 보면 어느 날부터
+                설정 온도까지 안 내려가는 일이 생깁니다.
+                """;
+
+        assertThat(ExcerptGenerator.generate(null, content))
+                .isEqualTo("냉동탑을 쓰다 보면 어느 날부터 설정 온도까지 안 내려가는 일이 생깁니다.");
     }
 
     @Test
     @DisplayName("기호를 벗겨낸 뒤 기준으로 150자를 센다")
     void countsAfterStripping() {
-        String content = "# " + "가".repeat(300);
+        String content = "본문 시작.\n\n" + "가".repeat(300);
 
-        assertThat(ExcerptGenerator.generate(null, content)).isEqualTo("가".repeat(150));
+        assertThat(ExcerptGenerator.generate(null, content))
+                .isEqualTo(("본문 시작. " + "가".repeat(300)).substring(0, 150));
     }
 }
