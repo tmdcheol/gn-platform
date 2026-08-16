@@ -39,7 +39,8 @@ public class DefaultRepairService implements RepairService {
                             "적재함 바닥이 물러지거나 출렁인다",
                             "측면 판넬이 찌그러지거나 찢어졌다",
                             "비가 오면 적재함 안으로 물이 샌다",
-                            "잠금 장치가 헛돌거나 걸리지 않는다")),
+                            "잠금 장치가 헛돌거나 걸리지 않는다"),
+                    true),
 
             new RepairResponse(2L, "wing-body", "윙바디 수리",
                     "윙 개폐 불량, 유압 실린더·호스 누유, 윙 판넬 교체를 진행합니다.", "wing",
@@ -68,7 +69,8 @@ public class DefaultRepairService implements RepairService {
                             "실린더나 호스에서 기름이 샌다",
                             "윙이 올라갈 때 소음이 심하다",
                             "양쪽 날개 높이가 맞지 않는다",
-                            "비가 오면 윙 틈으로 물이 들어온다")),
+                            "비가 오면 윙 틈으로 물이 들어온다"),
+                    true),
 
             new RepairResponse(3L, "refrigerated", "냉동탑 수리",
                     "냉동기 성능 저하, 단열 판넬 파손, 냉동탑 방수 시공을 다룹니다.", "snowflake",
@@ -97,7 +99,8 @@ public class DefaultRepairService implements RepairService {
                             "적재함 안에 성에가 심하게 낀다",
                             "문 고무가 굳어 틈이 생긴다",
                             "판넬이 찍히거나 찢어졌다",
-                            "바닥에 물이 고이고 냄새가 난다")),
+                            "바닥에 물이 고이고 냄새가 난다"),
+                    true),
 
             new RepairResponse(4L, "lift", "리프트 수리",
                     "파워게이트 작동 불량, 유압 누유, 리프트 발판 교체를 처리합니다.", "lift",
@@ -125,7 +128,8 @@ public class DefaultRepairService implements RepairService {
                             "리프트가 아예 작동하지 않는다",
                             "발판 수평이 맞지 않는다",
                             "작동 중 소음이나 떨림이 심하다",
-                            "유압 호스 주변에 기름이 새어 있다")),
+                            "유압 호스 주변에 기름이 새어 있다"),
+                    true),
 
             new RepairResponse(5L, "insurance", "보험·사고 수리",
                     "사고 차량 견적부터 보험사 접수까지 대신 처리해 드립니다.", "shield",
@@ -152,7 +156,8 @@ public class DefaultRepairService implements RepairService {
                             "보험 접수와 협의를 대신 맡기고 싶다",
                             "자비 수리와 보험 처리 중 무엇이 나은지 모르겠다",
                             "수리 기간에 탈 차가 필요하다",
-                            "상대 과실 사고로 처리해야 한다")),
+                            "상대 과실 사고로 처리해야 한다"),
+                    true),
 
             new RepairResponse(6L, "free-rental", "무료 대차",
                     "수리 기간 동안 영업이 멈추지 않도록 대차를 무료로 지원합니다.", "car",
@@ -177,7 +182,8 @@ public class DefaultRepairService implements RepairService {
                             "보험 렌트 규정과 어떻게 되는지 모르겠다",
                             "입고 일정을 미리 잡아두고 싶다",
                             "대여료나 보증금이 부담된다",
-                            "수리가 며칠 이상 걸릴 것 같다")),
+                            "수리가 며칠 이상 걸릴 것 같다"),
+                    true),
 
             new RepairResponse(7L, "nationwide-pickup", "전국 픽업",
                     "전국 어디든 차량을 무료로 픽업해 입고합니다.", "pickup",
@@ -202,7 +208,8 @@ public class DefaultRepairService implements RepairService {
                             "차주가 현장에 있기 어렵다",
                             "차를 맡기고 찾을 시간이 없다",
                             "입고 전에 견적을 먼저 알고 싶다",
-                            "수리 후 원하는 장소로 받고 싶다")),
+                            "수리 후 원하는 장소로 받고 싶다"),
+                    false),
 
             new RepairResponse(8L, "nationwide-tow", "전국 견인",
                     "자력 운행이 어려운 차량은 전국 견인으로 안전하게 이송합니다.", "tow",
@@ -226,7 +233,8 @@ public class DefaultRepairService implements RepairService {
                             "리프트가 내려온 채 고정되지 않는다",
                             "일반 견인차로는 처리가 어렵다고 들었다",
                             "적재물이 실린 채로 고장이 났다",
-                            "견인과 보험 접수를 같이 처리하고 싶다"))
+                            "견인과 보험 접수를 같이 처리하고 싶다"),
+                    false)
     );
 
     @Override

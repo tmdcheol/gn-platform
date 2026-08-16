@@ -86,6 +86,14 @@ class RepairServiceTest {
     }
 
     @Test
+    @DisplayName("전국 서비스는 지역 쿼리 대상이 아니다")
+    void nationwideServicesAreNotRegional() {
+        assertThat(repairService.getRepair("nationwide-pickup").regional()).isFalse();
+        assertThat(repairService.getRepair("nationwide-tow").regional()).isFalse();
+        assertThat(repairService.getRepair("wing-body").regional()).isTrue();
+    }
+
+    @Test
     @DisplayName("슬러그로 서비스 상세를 조회한다")
     void getRepairBySlug() {
         RepairResponse repair = repairService.getRepair("wing-body");

@@ -6,6 +6,8 @@ export type RepairService = {
   icon: string;
   longDescription: string;
   symptoms: string[];
+  /** 지역+서비스 쿼리를 노리는 서비스인지. 전국 픽업·견인은 false. */
+  regional: boolean;
 };
 
 export type Post = {

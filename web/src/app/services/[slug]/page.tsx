@@ -24,9 +24,13 @@ export async function generateStaticParams() {
   return (services ?? []).map((service) => ({ slug: service.slug }));
 }
 
-/** "광주 윙바디 수리"처럼 지역+서비스로 잡습니다. */
+/**
+ * "광주 윙바디 수리"처럼 지역+서비스로 잡습니다.
+ * 다만 전국 픽업·견인은 지역 한정 서비스가 아니라 "광주 전국 견인"이 되어버리므로
+ * (검색하는 사람도 없습니다) 서비스가 regional일 때만 지역을 붙입니다.
+ */
 function pageTitle(service: RepairService, contact: Contact | null) {
-  return contact
+  return service.regional && contact
     ? `${shortRegion(contact.addressRegion)} ${service.title}`
     : service.title;
 }
@@ -89,6 +93,9 @@ export default async function ServicePage({
 
   const title = pageTitle(service, contact);
   const relatedPosts = findRelatedPosts(service, posts);
+  // 이 서비스를 다룬 글이 아직 없어도 블로그로 가는 길은 남겨 둡니다.
+  const fallbackPosts = relatedPosts.length > 0 ? [] : (posts ?? []).slice(0, 3);
+  const linkedPosts = relatedPosts.length > 0 ? relatedPosts : fallbackPosts;
 
   return (
     <>
@@ -136,13 +143,13 @@ export default async function ServicePage({
               ))}
           </div>
 
-          {relatedPosts.length > 0 && (
+          {linkedPosts.length > 0 && (
             <div className="mt-16 border-t border-border pt-10">
               <h2 className="text-xl font-bold tracking-tight">
-                관련 정비 이야기
+                {relatedPosts.length > 0 ? "관련 정비 이야기" : "최근 정비 이야기"}
               </h2>
               <ul className="mt-5 grid gap-2">
-                {relatedPosts.map((post) => (
+                {linkedPosts.map((post) => (
                   <li key={post.id}>
                     <Link
                       href={`/blog/${post.slug}`}
