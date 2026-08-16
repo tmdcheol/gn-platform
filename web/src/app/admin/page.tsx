@@ -1,33 +1,149 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { apiFetchWithSession } from "@/lib/api";
+import { formatDate } from "@/lib/date";
+import { ApiError, apiFetchWithSession } from "@/lib/api";
+import type { Post } from "@/lib/types";
 
-/**
- * 로그인 후 도착하는 화면. 글 목록은 T-34에서 채웁니다.
- * 여기서는 세션이 살아 있는지(새로고침해도 유지되는지)만 확인합니다.
- */
-export default function AdminHomePage() {
+export default function AdminPostsPage() {
   const router = useRouter();
-  const [username, setUsername] = useState<string | null>(null);
+  const [posts, setPosts] = useState<Post[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  /** 401은 세션이 없거나 만료된 경우라 로그인 화면으로 보냅니다. */
+  const handleError = useCallback(
+    (cause: unknown) => {
+      if (cause instanceof ApiError && cause.status === 401) {
+        router.replace("/admin/login");
+        return;
+      }
+      setError("글 목록을 불러오지 못했습니다.");
+    },
+    [router],
+  );
 
   useEffect(() => {
-    apiFetchWithSession<{ username: string }>("/api/auth/me")
-      .then((me) => setUsername(me.username))
-      .catch(() => router.replace("/admin/login"));
-  }, [router]);
+    apiFetchWithSession<Post[]>("/api/admin/posts")
+      .then(setPosts)
+      .catch(handleError);
+  }, [handleError]);
 
-  if (!username) {
-    return null;
+  async function handleDelete(id: number) {
+    try {
+      await apiFetchWithSession(`/api/admin/posts/${id}`, { method: "DELETE" });
+      setPosts((current) => current?.filter((post) => post.id !== id) ?? null);
+    } catch (cause) {
+      handleError(cause);
+    }
   }
 
   return (
     <div className="wrap section-y">
-      <span className="eyebrow">관리자</span>
-      <h1 className="headline mt-3">{username}님, 로그인되어 있습니다</h1>
-      <p className="lead mt-5">글 목록은 준비 중입니다.</p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <span className="eyebrow">관리자</span>
+          <h1 className="headline mt-3">글 목록</h1>
+        </div>
+        <Link href="/admin/posts/new" className="btn btn-primary">
+          새 글
+        </Link>
+      </div>
+
+      {error && (
+        <p role="alert" className="mt-12 text-danger">
+          {error}
+        </p>
+      )}
+
+      {posts && posts.length === 0 && (
+        <p role="status" className="mt-12 text-muted">
+          아직 등록된 글이 없습니다.
+        </p>
+      )}
+
+      {posts && posts.length > 0 && (
+        <ul className="mt-10 grid gap-3">
+          {posts.map((post) => (
+            <li
+              key={post.id}
+              className="card flex flex-wrap items-center gap-x-4 gap-y-3 p-5"
+            >
+              <PublishBadge published={post.published} />
+              <span className="min-w-0 flex-1 font-semibold">{post.title}</span>
+              <time
+                dateTime={post.createdAt}
+                className="text-sm tabular-nums text-muted"
+              >
+                {formatDate(post.createdAt)}
+              </time>
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/admin/posts/${post.id}/edit`}
+                  className="rounded-lg px-3 py-1.5 text-sm font-semibold hover:bg-surface-2"
+                >
+                  수정
+                </Link>
+                <DeleteButton onDelete={() => handleDelete(post.id)} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
+  );
+}
+
+function PublishBadge({ published }: { published: boolean }) {
+  return (
+    <span
+      className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+        published ? "bg-brand-soft text-brand" : "bg-surface-2 text-muted"
+      }`}
+    >
+      {published ? "발행" : "임시"}
+    </span>
+  );
+}
+
+/**
+ * 되돌릴 수 없는 동작이라 한 번 더 묻습니다.
+ * window.confirm 대신 인라인 확인을 쓰면 브라우저 모달 없이 같은 효과를 냅니다.
+ */
+function DeleteButton({ onDelete }: { onDelete: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+
+  if (!confirming) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirming(true)}
+        className="rounded-lg px-3 py-1.5 text-sm font-semibold text-muted hover:bg-surface-2"
+      >
+        삭제
+      </button>
+    );
+  }
+
+  return (
+    <span className="flex items-center gap-1 text-sm">
+      <span className="text-muted">삭제할까요?</span>
+      <button
+        type="button"
+        onClick={onDelete}
+        className="rounded-lg px-2.5 py-1.5 font-bold text-danger hover:bg-surface-2"
+      >
+        삭제
+      </button>
+      <button
+        type="button"
+        onClick={() => setConfirming(false)}
+        className="rounded-lg px-2.5 py-1.5 font-semibold hover:bg-surface-2"
+      >
+        취소
+      </button>
+    </span>
   );
 }
