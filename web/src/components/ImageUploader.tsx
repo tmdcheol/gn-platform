@@ -5,6 +5,14 @@ import { useId, useState } from "react";
 import { ApiError, apiFetchWithSession } from "@/lib/api";
 
 /**
+ * 파일명에서 확장자를 뗀 값. 대체 텍스트 입력칸을 따로 두는 대신 여기서 기본값을 만들고,
+ * 관리자가 본문에서 고치게 합니다. 빈 alt는 이미지 검색 유입과 스크린리더 양쪽을 잃습니다.
+ */
+function altFromFilename(filename: string) {
+  return filename.replace(/\.[^.]+$/, "").trim();
+}
+
+/**
  * 관리자 폼의 이미지 업로드 버튼. 올린 뒤 무엇을 할지는 쓰는 쪽이 정합니다
  * (썸네일 필드에 채우거나 본문에 마크다운으로 삽입).
  */
@@ -14,7 +22,7 @@ export default function ImageUploader({
   onUnauthorized,
 }: {
   label: string;
-  onUploaded: (url: string) => void;
+  onUploaded: (url: string, alt: string) => void;
   onUnauthorized: () => void;
 }) {
   const inputId = useId();
@@ -38,7 +46,7 @@ export default function ImageUploader({
         "/api/admin/images",
         { method: "POST", body: formData },
       );
-      onUploaded(url);
+      onUploaded(url, altFromFilename(file.name));
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 401) {
         onUnauthorized();

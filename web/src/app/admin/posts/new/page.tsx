@@ -22,10 +22,11 @@ export default function NewPostPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  /** 업로드한 이미지를 본문 끝에 마크다운으로 붙입니다. */
-  function insertImage(url: string) {
+  /** 업로드한 이미지를 본문 끝에 마크다운으로 붙입니다. alt는 파일명이 기본값입니다. */
+  function insertImage(url: string, alt: string) {
+    const image = `![${alt}](${url})`;
     setContent((current) =>
-      current.trim() === "" ? `![](${url})\n` : `${current.trimEnd()}\n\n![](${url})\n`,
+      current.trim() === "" ? `${image}\n` : `${current.trimEnd()}\n\n${image}\n`,
     );
   }
 
@@ -127,7 +128,7 @@ export default function NewPostPage() {
           <div className="flex flex-wrap items-center gap-4">
             <ImageUploader
               label="이미지 업로드"
-              onUploaded={setThumbnailUrl}
+              onUploaded={(url) => setThumbnailUrl(url)}
               onUnauthorized={goToLogin}
             />
             {thumbnailUrl && (
