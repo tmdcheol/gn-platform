@@ -15,6 +15,7 @@
   --brand-strong: #1a3fb0;
   --brand-contrast: #ffffff;
   --brand-soft: #eef3ff;
+  --danger: #c0392b;
   --shadow-card: 0 1px 2px rgb(11 13 18 / 0.04), 0 8px 24px rgb(11 13 18 / 0.06);
   --shadow-lift: 0 2px 4px rgb(11 13 18 / 0.05), 0 16px 40px rgb(11 13 18 / 0.1);
 }
@@ -31,6 +32,7 @@
     --brand-strong: #8ab0ff;
     --brand-contrast: #08111f;
     --brand-soft: #141c2c;
+    --danger: #ff8a80;
     --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4), 0 8px 24px rgb(0 0 0 / 0.35);
     --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.45), 0 16px 40px rgb(0 0 0 / 0.5);
   }
@@ -47,6 +49,7 @@
   --color-brand-strong: var(--brand-strong);
   --color-brand-contrast: var(--brand-contrast);
   --color-brand-soft: var(--brand-soft);
+  --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
 }
 
@@ -268,6 +271,16 @@ body {
     box-shadow: var(--shadow-lift);
     border-color: color-mix(in oklab, var(--brand) 35%, var(--border));
   }
+}
+
+/* 관리자 폼 입력칸. 공개 화면에는 폼이 없어 여기서만 씁니다. */
+@utility field {
+  height: 3rem;
+  padding-inline: 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  color: var(--foreground);
 }
 
 /* ── 버튼 ──────────────────────────────────────────────────── */
