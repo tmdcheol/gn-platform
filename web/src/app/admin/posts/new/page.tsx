@@ -1,22 +1,37 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useId, useState } from "react";
 
+import ImageUploader from "@/components/ImageUploader";
 import Markdown from "@/components/Markdown";
 import { ApiError, apiFetchWithSession } from "@/lib/api";
 import type { Post } from "@/lib/types";
 
 export default function NewPostPage() {
   const router = useRouter();
+  const contentId = useId();
   const [title, setTitle] = useState("");
   const [author, setAuthor] = useState("");
   const [excerpt, setExcerpt] = useState("");
   const [content, setContent] = useState("");
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
   const [published, setPublished] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+
+  /** 업로드한 이미지를 본문 끝에 마크다운으로 붙입니다. */
+  function insertImage(url: string) {
+    setContent((current) =>
+      current.trim() === "" ? `![](${url})\n` : `${current.trimEnd()}\n\n![](${url})\n`,
+    );
+  }
+
+  function goToLogin() {
+    router.replace("/admin/login");
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -32,13 +47,14 @@ export default function NewPostPage() {
           author,
           excerpt: excerpt.trim() === "" ? null : excerpt,
           content,
+          thumbnailUrl,
           published,
         }),
       });
       router.replace("/admin");
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 401) {
-        router.replace("/admin/login");
+        goToLogin();
         return;
       }
       setError(
@@ -101,18 +117,65 @@ export default function NewPostPage() {
           />
         </label>
 
+        <div className="grid gap-2">
+          <span className="text-sm font-semibold">
+            썸네일{" "}
+            <span className="font-normal text-muted">
+              목록 카드와 공유 미리보기에 쓰입니다
+            </span>
+          </span>
+          <div className="flex flex-wrap items-center gap-4">
+            <ImageUploader
+              label="이미지 업로드"
+              onUploaded={setThumbnailUrl}
+              onUnauthorized={goToLogin}
+            />
+            {thumbnailUrl && (
+              <>
+                <div className="relative h-20 w-32 overflow-hidden rounded-xl bg-surface-2">
+                  <Image
+                    src={thumbnailUrl}
+                    alt=""
+                    fill
+                    sizes="128px"
+                    className="object-cover"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setThumbnailUrl(null)}
+                  className="rounded-lg px-3 py-1.5 text-sm font-semibold text-muted hover:bg-surface-2"
+                >
+                  썸네일 제거
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
         {/* 왼쪽에 마크다운 원문, 오른쪽에 공개 화면과 같은 렌더 결과(T-27). */}
         <div className="grid items-start gap-5 lg:grid-cols-2">
-          <label className="flex flex-col gap-2">
-            <span className="text-sm font-semibold">본문 (마크다운)</span>
+          {/* label 안에 label을 넣을 수 없어 헤더와 입력칸을 나눠 둡니다. */}
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label htmlFor={contentId} className="text-sm font-semibold">
+                본문 (마크다운)
+              </label>
+              <ImageUploader
+                label="본문에 이미지 삽입"
+                onUploaded={insertImage}
+                onUnauthorized={goToLogin}
+              />
+            </div>
             <textarea
+              id={contentId}
               value={content}
               onChange={(event) => setContent(event.target.value)}
               required
               rows={20}
               className="field h-auto py-3 font-mono text-sm leading-relaxed"
             />
-          </label>
+          </div>
 
           <div className="flex flex-col gap-2">
             <span className="text-sm font-semibold">미리보기</span>

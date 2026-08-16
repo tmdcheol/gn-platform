@@ -79,7 +79,10 @@ export async function apiFetch<T>(
   const res = await fetch(`${baseUrl()}${path}`, {
     ...requestInit,
     headers: {
-      ...(requestInit.body ? { "Content-Type": "application/json" } : {}),
+      // FormData는 브라우저가 boundary까지 붙여 Content-Type을 정해야 하므로 건드리지 않습니다.
+      ...(typeof requestInit.body === "string"
+        ? { "Content-Type": "application/json" }
+        : {}),
       ...requestInit.headers,
     },
     ...(revalidate === undefined ? {} : { next: { revalidate } }),
