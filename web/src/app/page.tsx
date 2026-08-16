@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 import Directions from "@/components/Directions";
 import Hero from "@/components/Hero";
+import LocalBusinessJsonLd from "@/components/LocalBusinessJsonLd";
 import Reviews from "@/components/Reviews";
 import Services from "@/components/Services";
 import Strengths from "@/components/Strengths";
@@ -29,6 +31,9 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <>
+      <Suspense fallback={null}>
+        <LocalBusinessJsonLd />
+      </Suspense>
       <Hero />
       <Strengths />
       <Services />

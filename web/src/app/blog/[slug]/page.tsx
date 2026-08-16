@@ -3,9 +3,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import DataError from "@/components/DataError";
+import JsonLd from "@/components/JsonLd";
 import Markdown from "@/components/Markdown";
 import { formatDate } from "@/lib/date";
 import { getPost } from "@/lib/data";
+import { articleJsonLd, breadcrumbJsonLd } from "@/lib/jsonLd";
 import { OPEN_GRAPH_DEFAULTS, SITE_NAME } from "@/lib/site";
 
 /**
@@ -77,6 +79,15 @@ export default async function BlogPostPage({
 
   return (
     <article className="wrap section-y">
+      <JsonLd data={articleJsonLd(post)} />
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "홈", path: "/" },
+          { name: "블로그", path: "/blog" },
+          { name: post.title, path: `/blog/${encodeURIComponent(post.slug)}` },
+        ])}
+      />
+
       <div className="mx-auto max-w-[46rem]">
         <h1 className="headline">{post.title}</h1>
 

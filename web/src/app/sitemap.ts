@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { toSitemapDate } from "@/lib/date";
+import { toIsoDate } from "@/lib/date";
 import { getPosts, getServices } from "@/lib/data";
 import { siteUrl } from "@/lib/site";
 
@@ -31,7 +31,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${base}/blog`,
       ...(latestPostUpdate
-        ? { lastModified: toSitemapDate(latestPostUpdate) }
+        ? { lastModified: toIsoDate(latestPostUpdate) }
         : {}),
       changeFrequency: "daily",
       priority: 0.8,
@@ -48,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const postRoutes: MetadataRoute.Sitemap = (posts ?? []).map((post) => ({
     url: `${base}/blog/${encodeURIComponent(post.slug)}`,
-    lastModified: toSitemapDate(post.updatedAt),
+    lastModified: toIsoDate(post.updatedAt),
     changeFrequency: "monthly",
     priority: 0.6,
   }));
