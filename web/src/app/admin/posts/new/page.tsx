@@ -43,7 +43,7 @@ export default function NewPostPage() {
       }
       setError(
         cause instanceof ApiError && cause.status === 400
-          ? "입력값을 확인해 주세요. 제목·작성자·본문은 필수입니다."
+          ? "입력값을 확인해 주세요. 제목·작성자·본문은 필수이고, 제목은 200자·요약은 300자까지입니다."
           : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       );
       setSaving(false);
@@ -70,6 +70,7 @@ export default function NewPostPage() {
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               required
+              maxLength={200}
               className="field"
             />
           </label>

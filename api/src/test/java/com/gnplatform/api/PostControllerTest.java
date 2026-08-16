@@ -215,6 +215,27 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("제목이 200자를 넘으면 500이 아니라 400")
+    void tooLongTitleIsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/admin/posts").with(csrf()).session(login())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PostRequest("제".repeat(201), "요약", "본문", null, "관리자", true))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors.title").value("제목은 200자를 넘을 수 없습니다"));
+    }
+
+    @Test
+    @DisplayName("제목이 정확히 200자면 통과한다")
+    void exactlyTwoHundredTitleIsOk() throws Exception {
+        mockMvc.perform(post("/api/admin/posts").with(csrf()).session(login())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PostRequest("제".repeat(200), "요약", "본문", null, "관리자", true))))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
     @DisplayName("요약이 300자를 넘으면 500이 아니라 400")
     void tooLongExcerptIsBadRequest() throws Exception {
         mockMvc.perform(post("/api/admin/posts").with(csrf()).session(login())

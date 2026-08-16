@@ -24,7 +24,7 @@ public class Post {
     @Column(unique = true, nullable = false)
     private String slug;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 200)
     private String title;
 
     @Column(length = 300)
