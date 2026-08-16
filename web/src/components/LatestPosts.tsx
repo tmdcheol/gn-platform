@@ -53,7 +53,7 @@ async function PostGrid() {
     <ul className={GRID_CLASS}>
       {posts.slice(0, LATEST_COUNT).map((post) => (
         <li key={post.id}>
-          <PostCard post={post} />
+          <PostCard post={post} headingLevel="h3" />
         </li>
       ))}
     </ul>
