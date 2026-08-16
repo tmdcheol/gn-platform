@@ -13,14 +13,17 @@ export default function AdminPostsPage() {
   const [posts, setPosts] = useState<Post[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  /** 401은 세션이 없거나 만료된 경우라 로그인 화면으로 보냅니다. */
-  const handleError = useCallback(
+  /**
+   * 세션이 없거나 만료된 401만 여기서 처리합니다.
+   * 그 밖의 실패는 무엇을 하다 실패했는지에 따라 문구가 달라야 해서 호출부에 맡깁니다.
+   */
+  const redirectIfUnauthorized = useCallback(
     (cause: unknown) => {
-      if (cause instanceof ApiError && cause.status === 401) {
+      const unauthorized = cause instanceof ApiError && cause.status === 401;
+      if (unauthorized) {
         router.replace("/admin/login");
-        return;
       }
-      setError("글 목록을 불러오지 못했습니다.");
+      return unauthorized;
     },
     [router],
   );
@@ -28,15 +31,22 @@ export default function AdminPostsPage() {
   useEffect(() => {
     apiFetchWithSession<Post[]>("/api/admin/posts")
       .then(setPosts)
-      .catch(handleError);
-  }, [handleError]);
+      .catch((cause) => {
+        if (!redirectIfUnauthorized(cause)) {
+          setError("글 목록을 불러오지 못했습니다.");
+        }
+      });
+  }, [redirectIfUnauthorized]);
 
   async function handleDelete(id: number) {
+    setError(null);
     try {
       await apiFetchWithSession(`/api/admin/posts/${id}`, { method: "DELETE" });
       setPosts((current) => current?.filter((post) => post.id !== id) ?? null);
     } catch (cause) {
-      handleError(cause);
+      if (!redirectIfUnauthorized(cause)) {
+        setError("글을 삭제하지 못했습니다. 목록은 그대로입니다.");
+      }
     }
   }
 
@@ -57,6 +67,8 @@ export default function AdminPostsPage() {
           {error}
         </p>
       )}
+
+      {!posts && !error && <ListSkeleton />}
 
       {posts && posts.length === 0 && (
         <p role="status" className="mt-12 text-muted">
@@ -93,6 +105,21 @@ export default function AdminPostsPage() {
         </ul>
       )}
     </div>
+  );
+}
+
+/** 목록을 받아오기 전 자리. 로그아웃 상태로 들어와 리다이렉트되기 직전에도 이 화면입니다. */
+function ListSkeleton() {
+  return (
+    <ul className="mt-10 grid gap-3" aria-hidden>
+      {Array.from({ length: 4 }, (_, i) => (
+        <li key={i} className="card flex animate-pulse items-center gap-4 p-5">
+          <div className="h-6 w-12 rounded-full bg-surface-2" />
+          <div className="h-5 flex-1 rounded bg-surface-2" />
+          <div className="h-5 w-24 rounded bg-surface-2" />
+        </li>
+      ))}
+    </ul>
   );
 }
 
