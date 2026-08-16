@@ -21,6 +21,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 
 import com.gnplatform.api.dto.ErrorResponse;
@@ -62,11 +63,18 @@ public class SecurityConfig {
         return configuration.getAuthenticationManager();
     }
 
+    /**
+     * 프론트가 XSRF-TOKEN 쿠키를 읽어 헤더에 실어야 하므로 HttpOnly를 끕니다.
+     * 로그인 시 토큰을 재발급하는 AuthService도 같은 저장소를 써야 해서 빈으로 꺼냈습니다.
+     */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        // 프론트가 XSRF-TOKEN 쿠키를 읽어 헤더에 실어야 하므로 HttpOnly를 끕니다.
-        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+    public CsrfTokenRepository csrfTokenRepository() {
+        return CookieCsrfTokenRepository.withHttpOnlyFalse();
+    }
 
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, CsrfTokenRepository csrfTokenRepository)
+            throws Exception {
         // 기본값은 토큰을 지연 생성해서 첫 GET 응답에 XSRF-TOKEN 쿠키가 실리지 않습니다.
         // 프론트는 로그인 전에 토큰을 받아둬야 하므로 지연 로딩을 끕니다.
         CsrfTokenRequestAttributeHandler csrfTokenRequestHandler = new CsrfTokenRequestAttributeHandler();
