@@ -32,8 +32,35 @@ export function getServices() {
   return readOrNull<RepairService[]>("/api/services");
 }
 
+/**
+ * 서비스 상세. 없는 슬러그는 "not-found", API 장애는 null로 구분합니다(getPost와 같은 규칙).
+ */
+export async function getService(
+  slug: string,
+): Promise<RepairService | "not-found" | null> {
+  try {
+    return await apiFetch<RepairService>(`/api/services/${slug}`, {
+      revalidate: CONTENT_REVALIDATE_SECONDS,
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return "not-found";
+    }
+    console.error(`[api] /api/services/${slug} 조회 실패`, error);
+    return null;
+  }
+}
+
 export function getReviews() {
   return readOrNull<Review[]>("/api/reviews");
+}
+
+/**
+ * 다른 페이지에 곁들이는 글 목록(관련 글 등)은 60초 캐시본을 씁니다.
+ * 이 페이지들은 미리 생성해 두는 편이 이득이고, 새 글이 1분 늦게 붙어도 문제가 없습니다.
+ */
+export function getCachedPosts() {
+  return readOrNull<Post[]>("/api/posts");
 }
 
 /**
