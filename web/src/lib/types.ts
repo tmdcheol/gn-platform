@@ -32,5 +32,19 @@ export type Contact = {
   phone: string;
   callCenter: string[];
   kakaoOpenChatUrl: string;
+  /** 화면에 그대로 노출하는 한 줄 주소. */
   address: string;
+  /** 구조화 데이터용으로 쪼갠 주소. */
+  streetAddress: string;
+  addressLocality: string;
+  addressRegion: string;
+  /** 영업시간. 휴무일은 항목 자체가 없습니다. */
+  businessHours: BusinessHours[];
+};
+
+export type BusinessHours = {
+  /** schema.org DayOfWeek 값(Monday, Saturday …) */
+  days: string[];
+  opens: string;
+  closes: string;
 };

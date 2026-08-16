@@ -26,16 +26,26 @@ export function localBusinessJsonLd(contact: Contact) {
       areaServed: "KR",
       availableLanguage: "Korean",
     })),
+    // 주소도 API가 쪼개서 내려줍니다. 화면용 한 줄 주소를 그대로 넣으면 시·구가 중복됩니다.
     address: {
       "@type": "PostalAddress",
-      streetAddress: contact.address,
-      addressLocality: "광주광역시 광산구",
+      streetAddress: contact.streetAddress,
+      addressLocality: contact.addressLocality,
+      addressRegion: contact.addressRegion,
       addressCountry: "KR",
     },
     areaServed: [
-      { "@type": "AdministrativeArea", name: "광주광역시" },
+      { "@type": "AdministrativeArea", name: contact.addressRegion },
       { "@type": "Country", name: "대한민국" },
     ],
+    // 검색 결과에 "영업 중 / 영업 종료"로 노출되는 항목입니다.
+    // API를 먼저 배포하지 않으면 이 필드가 없는 응답이 올 수 있어 빈 배열을 견딥니다.
+    openingHoursSpecification: (contact.businessHours ?? []).map((hours) => ({
+      "@type": "OpeningHoursSpecification",
+      dayOfWeek: hours.days,
+      opens: hours.opens,
+      closes: hours.closes,
+    })),
   };
 }
 
