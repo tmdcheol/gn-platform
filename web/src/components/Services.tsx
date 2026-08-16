@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 
 import DataError from "@/components/DataError";
@@ -5,7 +6,7 @@ import Icon from "@/components/Icon";
 import { getServices } from "@/lib/data";
 
 const GRID_CLASS = "mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-3";
-const CARD_CLASS = "card card-hover p-8";
+const CARD_CLASS = "card card-hover block h-full p-8";
 
 export default function Services() {
   return (
@@ -37,14 +38,17 @@ async function ServiceGrid() {
   return (
     <ul className={GRID_CLASS}>
       {services.map((service) => (
-        <li key={service.id} className={CARD_CLASS}>
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-soft text-brand">
-            <Icon name={service.icon} />
-          </span>
-          <h3 className="mt-6 text-xl font-bold tracking-tight">
-            {service.title}
-          </h3>
-          <p className="mt-2 text-muted">{service.description}</p>
+        <li key={service.id}>
+          {/* 카드 전체가 서비스 랜딩(T-31)으로 가는 내부 링크입니다. */}
+          <Link href={`/services/${service.slug}`} className={CARD_CLASS}>
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-soft text-brand">
+              <Icon name={service.icon} />
+            </span>
+            <h3 className="mt-6 text-xl font-bold tracking-tight">
+              {service.title}
+            </h3>
+            <p className="mt-2 text-muted">{service.description}</p>
+          </Link>
         </li>
       ))}
     </ul>

@@ -3,6 +3,7 @@ import { Suspense } from "react";
 
 import Directions from "@/components/Directions";
 import Hero from "@/components/Hero";
+import LatestPosts from "@/components/LatestPosts";
 import LocalBusinessJsonLd from "@/components/LocalBusinessJsonLd";
 import Reviews from "@/components/Reviews";
 import Services from "@/components/Services";
@@ -37,6 +38,7 @@ export default function Home() {
       <Hero />
       <Strengths />
       <Services />
+      <LatestPosts />
       <Reviews />
       <Directions />
     </>
