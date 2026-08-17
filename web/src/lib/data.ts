@@ -65,19 +65,46 @@ export function getReviews() {
 export const POSTS_TAG = "posts";
 const POSTS_REVALIDATE_SECONDS = 3600;
 
+const POSTS_PAGE_SIZE = 100;
+
+type PostPage = { content: Post[]; totalPages: number };
+
+function readPostPage(page: number) {
+  return readOrNull<PostPage>(
+    `/api/posts?page=${page}&size=${POSTS_PAGE_SIZE}`,
+    { revalidate: POSTS_REVALIDATE_SECONDS, tags: [POSTS_TAG] },
+  );
+}
+
 /**
  * 글 목록. 태그 캐시라 정적으로 구워지고, 발행하면 무효화로 즉시 갈립니다.
+ *
+ * 목록 API가 페이지로 응답합니다(T-39). 화면 페이지네이션은 T-41이라 지금은 첫 페이지만 씁니다.
+ * 사이트맵처럼 전체가 필요한 곳은 getAllPosts를 쓰세요 — 여기서 잘린 글은 색인에서 빠집니다.
  */
 export async function getPosts(): Promise<Post[] | null> {
-  // 목록 API가 페이지로 응답합니다(T-39). 화면 페이지네이션은 T-41이라 지금은 한 번에 받아 풉니다.
-  const page = await readOrNull<{ content: Post[] }>(
-    "/api/posts?page=0&size=100",
-    {
-      revalidate: POSTS_REVALIDATE_SECONDS,
-      tags: [POSTS_TAG],
-    },
-  );
+  const page = await readPostPage(0);
   return page?.content ?? null;
+}
+
+/**
+ * 발행된 글 전체. 페이지를 끝까지 따라갑니다.
+ * 사이트맵이 글 수에 따라 조용히 잘리면 그만큼 색인이 빠지므로, 상한을 두지 않습니다.
+ */
+export async function getAllPosts(): Promise<Post[] | null> {
+  const first = await readPostPage(0);
+  if (!first) {
+    return null;
+  }
+
+  const rest = await Promise.all(
+    Array.from({ length: Math.max(first.totalPages - 1, 0) }, (_, index) =>
+      readPostPage(index + 1),
+    ),
+  );
+
+  // 뒤 페이지 하나가 실패해도 사이트맵 전체를 버리지는 않습니다 — 받은 만큼은 남깁니다.
+  return [...first.content, ...rest.flatMap((page) => page?.content ?? [])];
 }
 
 /**

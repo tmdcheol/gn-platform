@@ -1,18 +1,19 @@
 import type { MetadataRoute } from "next";
 
 import { toIsoDate } from "@/lib/date";
-import { getPosts, getServices } from "@/lib/data";
+import { getAllPosts, getServices } from "@/lib/data";
 import { siteUrl } from "@/lib/site";
 
 /**
  * 메인 + /blog + 발행된 글 전체 + 서비스 랜딩 8개.
  *
  * 글은 `/api/posts`(공개 목록)에서 가져오므로 임시저장 글은 애초에 넘어오지 않습니다.
+ * 목록은 페이지 응답이라 getAllPosts로 끝까지 따라갑니다 — 잘리면 그만큼 색인에서 빠집니다.
  * API가 죽어도 사이트맵 자체가 깨지지 않도록, 못 가져온 부분만 빠지고 나머지는 남깁니다.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = siteUrl();
-  const [posts, services] = await Promise.all([getPosts(), getServices()]);
+  const [posts, services] = await Promise.all([getAllPosts(), getServices()]);
 
   // 목록의 최신성은 가장 최근에 수정된 글이 알려줍니다.
   // 메인은 근거가 될 신호가 없어 lastmod를 붙이지 않습니다 —
