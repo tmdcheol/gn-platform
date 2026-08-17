@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import PostForm, { type PostFormValues } from "@/components/PostForm";
-import { revalidatePosts } from "@/lib/actions";
 import { apiFetchWithSession } from "@/lib/api";
+import { revalidatePostsQuietly } from "@/lib/revalidate";
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -15,7 +15,7 @@ export default function NewPostPage() {
       method: "POST",
       body: JSON.stringify(values),
     });
-    await revalidatePosts();
+    await revalidatePostsQuietly();
     router.replace("/admin");
   }
 
