@@ -67,12 +67,13 @@ export async function apiFetchWithSession<T>(
 /**
  * @param revalidate 초 단위 캐시 수명. 생략하면 Next 기본값(캐시하지 않음)이므로,
  *   글 목록처럼 항상 최신이어야 하는 요청은 아무것도 넘기지 않으면 됩니다.
+ * @param tags 캐시 태그. 관리자가 글을 저장·삭제하면 이 태그로 즉시 무효화합니다(T-38).
  */
 export async function apiFetch<T>(
   path: string,
-  init?: RequestInit & { revalidate?: number },
+  init?: RequestInit & { revalidate?: number; tags?: string[] },
 ): Promise<T> {
-  const { revalidate, ...requestInit } = init ?? {};
+  const { revalidate, tags, ...requestInit } = init ?? {};
 
   // AbortSignal을 넘기면 Next의 fetch 메모이제이션이 꺼집니다(같은 렌더에서
   // 같은 요청이 여러 번 나감). 타임아웃 대신 메모이제이션을 택했습니다.
@@ -85,7 +86,9 @@ export async function apiFetch<T>(
         : {}),
       ...requestInit.headers,
     },
-    ...(revalidate === undefined ? {} : { next: { revalidate } }),
+    ...(revalidate === undefined && tags === undefined
+      ? {}
+      : { next: { ...(revalidate === undefined ? {} : { revalidate }), ...(tags ? { tags } : {}) } }),
   });
 
   if (!res.ok) {

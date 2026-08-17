@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 
 import PostForm, { type PostFormValues } from "@/components/PostForm";
+import { revalidatePosts } from "@/lib/actions";
 import { ApiError, apiFetchWithSession } from "@/lib/api";
 import type { Post } from "@/lib/types";
 
@@ -42,6 +43,7 @@ export default function EditPostPage({
       method: "PUT",
       body: JSON.stringify(values),
     });
+    await revalidatePosts();
     router.replace("/admin");
   }
 
@@ -98,6 +100,7 @@ function DeleteButton({
     setError(null);
     try {
       await apiFetchWithSession(`/api/admin/posts/${id}`, { method: "DELETE" });
+      await revalidatePosts();
       router.replace("/admin");
     } catch (cause) {
       if (cause instanceof ApiError && cause.status === 401) {

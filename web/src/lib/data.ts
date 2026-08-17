@@ -13,11 +13,14 @@ import type { Contact, Post, RepairService, Review } from "@/lib/types";
  */
 const CONTENT_REVALIDATE_SECONDS = 60;
 
-async function readOrNull<T>(path: string): Promise<T | null> {
+async function readOrNull<T>(
+  path: string,
+  cache: { revalidate: number; tags?: string[] } = {
+    revalidate: CONTENT_REVALIDATE_SECONDS,
+  },
+): Promise<T | null> {
   try {
-    return await apiFetch<T>(path, {
-      revalidate: CONTENT_REVALIDATE_SECONDS,
-    });
+    return await apiFetch<T>(path, cache);
   } catch (error) {
     console.error(`[api] ${path} 조회 실패`, error);
     return null;
@@ -56,25 +59,20 @@ export function getReviews() {
 }
 
 /**
- * 다른 페이지에 곁들이는 글 목록(관련 글 등)은 60초 캐시본을 씁니다.
- * 이 페이지들은 미리 생성해 두는 편이 이득이고, 새 글이 1분 늦게 붙어도 문제가 없습니다.
+ * 글 캐시 태그. 관리자가 저장·삭제하면 이 태그를 무효화해 목록·상세를 한 번에 새로 굽습니다(T-38).
+ * 시간 만료는 보험일 뿐이라 길게 둡니다 — 발행 반영은 태그 무효화가 책임집니다.
  */
-export function getCachedPosts() {
-  return readOrNull<Post[]>("/api/posts");
-}
+export const POSTS_TAG = "posts";
+const POSTS_REVALIDATE_SECONDS = 3600;
 
 /**
- * 글 목록은 관리자가 발행하면 바로 보여야 하므로 캐시하지 않습니다.
- * no-store를 명시해야 빌드 시점에 정적으로 구워지지 않습니다 — 구워지면 발행이 늦게 반영되고,
- * 빌드할 때 API가 꺼져 있으면 에러 화면이 그대로 박힙니다.
+ * 글 목록. 태그 캐시라 정적으로 구워지고, 발행하면 무효화로 즉시 갈립니다.
  */
 export async function getPosts(): Promise<Post[] | null> {
-  try {
-    return await apiFetch<Post[]>("/api/posts", { cache: "no-store" });
-  } catch (error) {
-    console.error("[api] /api/posts 조회 실패", error);
-    return null;
-  }
+  return readOrNull<Post[]>("/api/posts", {
+    revalidate: POSTS_REVALIDATE_SECONDS,
+    tags: [POSTS_TAG],
+  });
 }
 
 /**
@@ -101,7 +99,8 @@ function encodeSlug(slug: string) {
 export async function getPost(slug: string): Promise<Post | "not-found" | null> {
   try {
     return await apiFetch<Post>(`/api/posts/${encodeSlug(slug)}`, {
-      cache: "no-store",
+      revalidate: POSTS_REVALIDATE_SECONDS,
+      tags: [POSTS_TAG],
     });
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {

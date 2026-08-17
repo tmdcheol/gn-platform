@@ -35,7 +35,7 @@ export default function LatestPosts() {
 }
 
 /**
- * 발행 즉시 반영돼야 하므로 캐시하지 않는 getPosts를 씁니다.
+ * 발행하면 관리자 화면이 posts 태그를 무효화하므로(T-38) 캐시본으로도 즉시 반영됩니다.
  * 목록은 최신순으로 오므로 앞 3건을 자릅니다 — API 페이지네이션은 T-39입니다.
  */
 async function PostGrid() {

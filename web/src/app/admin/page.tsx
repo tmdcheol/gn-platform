@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { formatDate } from "@/lib/date";
+import { revalidatePosts } from "@/lib/actions";
 import { ApiError, apiFetchWithSession } from "@/lib/api";
 import type { Post } from "@/lib/types";
 
@@ -43,6 +44,7 @@ export default function AdminPostsPage() {
     try {
       await apiFetchWithSession(`/api/admin/posts/${id}`, { method: "DELETE" });
       setPosts((current) => current?.filter((post) => post.id !== id) ?? null);
+      await revalidatePosts();
     } catch (cause) {
       if (!redirectIfUnauthorized(cause)) {
         setError("글을 삭제하지 못했습니다. 목록은 그대로입니다.");

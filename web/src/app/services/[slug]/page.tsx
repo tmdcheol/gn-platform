@@ -6,8 +6,8 @@ import DataError from "@/components/DataError";
 import Icon from "@/components/Icon";
 import JsonLd from "@/components/JsonLd";
 import {
-  getCachedPosts,
   getContact,
+  getPosts,
   getService,
   getServices,
 } from "@/lib/data";
@@ -73,7 +73,7 @@ export default async function ServicePage({
   const [service, contact, posts] = await Promise.all([
     getService(slug),
     getContact(),
-    getCachedPosts(),
+    getPosts(),
   ]);
 
   if (service === "not-found") {
