@@ -15,7 +15,7 @@ const CONTENT_REVALIDATE_SECONDS = 60;
 
 async function readOrNull<T>(
   path: string,
-  cache: { revalidate: number; tags?: string[] } = {
+  cache: RequestInit & { revalidate?: number; tags?: string[] } = {
     revalidate: CONTENT_REVALIDATE_SECONDS,
   },
 ): Promise<T | null> {
@@ -69,7 +69,7 @@ const POSTS_REVALIDATE_SECONDS = 3600;
 const POSTS_PAGE_SIZE = 100;
 
 /** /blog 한 페이지에 보이는 글 수. */
-export const BLOG_PAGE_SIZE = 6;
+const BLOG_PAGE_SIZE = 6;
 
 export type PostPage = {
   content: Post[];
@@ -83,10 +83,14 @@ function readPostPage(page: number, size: number, q = "") {
     query.set("q", q);
   }
 
-  return readOrNull<PostPage>(`/api/posts?${query}`, {
-    revalidate: POSTS_REVALIDATE_SECONDS,
-    tags: [POSTS_TAG],
-  });
+  // 검색 결과는 캐시하지 않습니다 — 검색어마다 별도 엔트리라, 봇이 아무 말이나 긁으면
+  // 데이터 캐시가 계속 불어납니다. 목록·상세만 태그 캐시로 굽습니다.
+  return readOrNull<PostPage>(
+    `/api/posts?${query}`,
+    q
+      ? { cache: "no-store" }
+      : { revalidate: POSTS_REVALIDATE_SECONDS, tags: [POSTS_TAG] },
+  );
 }
 
 /**

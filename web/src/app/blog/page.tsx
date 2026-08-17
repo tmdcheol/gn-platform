@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import DataError from "@/components/DataError";
-import Pagination from "@/components/Pagination";
+import Pagination, { blogHref } from "@/components/Pagination";
 import PostCard from "@/components/PostCard";
 import PostSearch from "@/components/PostSearch";
 import { getPostPage } from "@/lib/data";
@@ -9,19 +10,6 @@ import { OPEN_GRAPH_DEFAULTS } from "@/lib/site";
 
 const DESCRIPTION =
   "탑차·윙바디·냉동탑·리프트에서 자주 나오는 증상과 점검 방법을 정비 현장 기준으로 정리했습니다.";
-
-export const metadata: Metadata = {
-  title: "특장차 정비 이야기와 수리 사례",
-  description: DESCRIPTION,
-  alternates: { canonical: "/blog" },
-  openGraph: {
-    ...OPEN_GRAPH_DEFAULTS,
-    title: "특장차 정비 이야기와 수리 사례 | GN특장",
-    description: DESCRIPTION,
-    url: "/blog",
-    type: "website",
-  },
-};
 
 // 데스크톱 3열 / 모바일 1열.
 const GRID_CLASS = "mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3";
@@ -37,6 +25,33 @@ function searchQuery(value: string | string[] | undefined) {
 }
 
 /**
+ * 검색 결과는 색인 대상이 아닙니다 — 같은 글이 검색어마다 중복 URL로 잡히기만 합니다.
+ * 페이지는 자기참조 canonical을 줍니다. 전부 /blog로 몰면 2페이지 글이 색인에서 겉돕니다.
+ */
+export async function generateMetadata({
+  searchParams,
+}: PageProps<"/blog">): Promise<Metadata> {
+  const params = await searchParams;
+  const q = searchQuery(params.q);
+  const page = pageNumber(params.page);
+  const canonical = blogHref(page, "");
+
+  return {
+    title: "특장차 정비 이야기와 수리 사례",
+    description: DESCRIPTION,
+    alternates: { canonical },
+    ...(q ? { robots: { index: false, follow: true } } : {}),
+    openGraph: {
+      ...OPEN_GRAPH_DEFAULTS,
+      title: "특장차 정비 이야기와 수리 사례 | GN특장",
+      description: DESCRIPTION,
+      url: canonical,
+      type: "website",
+    },
+  };
+}
+
+/**
  * 공개 목록입니다. 글쓰기·수정·삭제 버튼을 두지 않습니다 — 작성은 /admin에서만.
  * 크롤러에 내용이 실려야 하므로 서버 컴포넌트에서 await로 가져옵니다.
  *
@@ -48,6 +63,12 @@ export default async function BlogPage({ searchParams }: PageProps<"/blog">) {
   const q = searchQuery(params.q);
   const page = pageNumber(params.page);
   const result = await getPostPage(page - 1, q);
+
+  // 있는 페이지 수를 넘겨 들어오면(?page=99) 빈 화면을 200으로 내주지 않고 404로 보냅니다.
+  // 돌아갈 링크도 없는 막다른 페이지가 색인되면 손해입니다.
+  if (result !== null && result.totalPages > 0 && page > result.totalPages) {
+    notFound();
+  }
 
   return (
     <div className="wrap section-y">
