@@ -67,7 +67,7 @@ class PostTest {
         LocalDateTime before = post.getUpdatedAt();
         sleepAMoment();
 
-        post.update("바뀐 제목", "바뀐 요약", "## 바뀐 본문", "/images/b.jpg");
+        post.update("바뀐 제목", "바뀐 요약", false, "## 바뀐 본문", "/images/b.jpg");
 
         assertThat(post.getTitle()).isEqualTo("바뀐 제목");
         assertThat(post.getExcerpt()).isEqualTo("바뀐 요약");
@@ -81,7 +81,7 @@ class PostTest {
     void slugNeverChanges() {
         Post post = newPost();
 
-        post.update("바뀐 제목", "요약", "본문", null);
+        post.update("바뀐 제목", "요약", false, "본문", null);
 
         assertThat(post.getSlug()).isEqualTo("윙바디-유압-누유");
     }
@@ -92,7 +92,7 @@ class PostTest {
         Post post = newPost();
         LocalDateTime createdAt = post.getCreatedAt();
 
-        post.update("바뀐 제목", "요약", "본문", null);
+        post.update("바뀐 제목", "요약", false, "본문", null);
 
         assertThat(post.getCreatedAt()).isEqualTo(createdAt);
     }

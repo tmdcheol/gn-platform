@@ -9,6 +9,8 @@ public record PostResponse(
         String slug,
         String title,
         String excerpt,
+        /** 요약이 본문에서 자동 생성된 값인지. 관리자 수정 화면이 프리필 여부를 정하는 데 씁니다. */
+        boolean excerptAuto,
         String content,
         String thumbnailUrl,
         String author,
@@ -23,6 +25,7 @@ public record PostResponse(
                 post.getSlug(),
                 post.getTitle(),
                 post.getExcerpt(),
+                post.isExcerptAuto(),
                 post.getContent(),
                 post.getThumbnailUrl(),
                 post.getAuthor(),

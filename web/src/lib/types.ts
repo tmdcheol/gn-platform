@@ -15,6 +15,8 @@ export type Post = {
   slug: string;
   title: string;
   excerpt: string;
+  /** 요약이 본문에서 자동 생성된 값인지. 수정 화면은 이 값이 true면 요약칸을 비워 둡니다. */
+  excerptAuto: boolean;
   content: string;
   thumbnailUrl: string | null;
   author: string;

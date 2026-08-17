@@ -70,6 +70,7 @@ public class DefaultPostService implements PostService {
                 .slug(generateUniqueSlug(request.title()))
                 .title(request.title())
                 .excerpt(ExcerptGenerator.generate(request.excerpt(), request.content()))
+                .excerptAuto(isBlank(request.excerpt()))
                 .content(request.content())
                 .thumbnailUrl(request.thumbnailUrl())
                 .author(request.author())
@@ -87,6 +88,7 @@ public class DefaultPostService implements PostService {
         // 제목이 바뀌어도 슬러그는 유지합니다 — URL이 바뀌면 색인이 날아갑니다.
         post.update(request.title(),
                 ExcerptGenerator.generate(request.excerpt(), request.content()),
+                isBlank(request.excerpt()),
                 request.content(),
                 request.thumbnailUrl());
         if (request.published() != post.isPublished()) {
@@ -103,6 +105,11 @@ public class DefaultPostService implements PostService {
     @Transactional
     public void delete(Long id) {
         postRepository.delete(findPost(id));
+    }
+
+    /** 요약을 비워 보내면 본문에서 자동으로 만듭니다. */
+    private static boolean isBlank(String excerpt) {
+        return excerpt == null || excerpt.isBlank();
     }
 
     private Post findPost(Long id) {

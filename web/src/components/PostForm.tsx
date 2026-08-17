@@ -41,7 +41,10 @@ export default function PostForm({
   const contentId = useId();
   const [title, setTitle] = useState(initial?.title ?? "");
   const [author, setAuthor] = useState(initial?.author ?? "");
-  const [excerpt, setExcerpt] = useState(initial?.excerpt ?? "");
+  // 자동 요약은 프리필하지 않습니다. 채워 두면 그대로 다시 저장돼 옛 본문 상태로 굳습니다.
+  const [excerpt, setExcerpt] = useState(
+    initial && !initial.excerptAuto ? initial.excerpt : "",
+  );
   const [content, setContent] = useState(initial?.content ?? "");
   const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(
     initial?.thumbnailUrl ?? null,

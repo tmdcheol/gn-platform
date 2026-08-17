@@ -270,6 +270,49 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("자동 요약은 수정 후 새 본문을 따라간다")
+    void autoExcerptFollowsContent() throws Exception {
+        String location = mockMvc.perform(post("/api/admin/posts").with(csrf()).session(login())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PostRequest("자동 요약", null, "처음 본문입니다.", null, "관리자", true))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.excerptAuto").value(true))
+                .andExpect(jsonPath("$.excerpt").value("처음 본문입니다."))
+                .andReturn().getResponse().getHeader("Location");
+        Long id = Long.valueOf(location.substring(location.lastIndexOf('/') + 1));
+
+        mockMvc.perform(put("/api/admin/posts/" + id).with(csrf()).session(login())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PostRequest("자동 요약", null, "통째로 바꾼 본문입니다.", null, "관리자", true))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.excerptAuto").value(true))
+                .andExpect(jsonPath("$.excerpt").value("통째로 바꾼 본문입니다."));
+    }
+
+    @Test
+    @DisplayName("직접 쓴 요약은 본문을 바꿔도 그대로다")
+    void manualExcerptIsKept() throws Exception {
+        String location = mockMvc.perform(post("/api/admin/posts").with(csrf()).session(login())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PostRequest("직접 요약", "손으로 쓴 요약", "처음 본문입니다.", null, "관리자", true))))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.excerptAuto").value(false))
+                .andReturn().getResponse().getHeader("Location");
+        Long id = Long.valueOf(location.substring(location.lastIndexOf('/') + 1));
+
+        mockMvc.perform(put("/api/admin/posts/" + id).with(csrf()).session(login())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new PostRequest("직접 요약", "손으로 쓴 요약", "통째로 바꾼 본문입니다.", null, "관리자", true))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.excerptAuto").value(false))
+                .andExpect(jsonPath("$.excerpt").value("손으로 쓴 요약"));
+    }
+
+    @Test
     @DisplayName("없는 슬러그 조회는 500이 아니라 404")
     void notFoundCases() throws Exception {
         mockMvc.perform(get("/api/posts/없는-슬러그"))

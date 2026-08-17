@@ -30,6 +30,13 @@ public class Post {
     @Column(length = 300)
     private String excerpt;
 
+    /**
+     * 요약을 본문에서 자동으로 만들었는지. 관리자가 직접 쓴 요약과 구분해야
+     * 수정 화면이 자동 요약을 프리필하지 않고, 본문을 고치면 요약이 따라옵니다.
+     */
+    @Column(nullable = false)
+    private boolean excerptAuto;
+
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
@@ -48,11 +55,12 @@ public class Post {
     private LocalDateTime updatedAt;
 
     @Builder
-    private Post(String slug, String title, String excerpt, String content,
+    private Post(String slug, String title, String excerpt, boolean excerptAuto, String content,
                  String thumbnailUrl, String author, boolean published) {
         this.slug = slug;
         this.title = title;
         this.excerpt = excerpt;
+        this.excerptAuto = excerptAuto;
         this.content = content;
         this.thumbnailUrl = thumbnailUrl;
         this.author = author;
@@ -64,9 +72,10 @@ public class Post {
     /**
      * 제목·본문 등을 수정합니다. 슬러그는 색인 유지를 위해 바뀌지 않습니다.
      */
-    public void update(String title, String excerpt, String content, String thumbnailUrl) {
+    public void update(String title, String excerpt, boolean excerptAuto, String content, String thumbnailUrl) {
         this.title = title;
         this.excerpt = excerpt;
+        this.excerptAuto = excerptAuto;
         this.content = content;
         this.thumbnailUrl = thumbnailUrl;
         this.updatedAt = LocalDateTime.now();
