@@ -40,9 +40,11 @@ public class DefaultPostService implements PostService {
     }
 
     @Override
-    public Page<PostResponse> getPublishedPosts(Pageable pageable) {
-        return postRepository.findAllByPublishedTrueOrderByCreatedAtDescIdDesc(pageable)
-                .map(PostResponse::from);
+    public Page<PostResponse> getPublishedPosts(String q, Pageable pageable) {
+        Page<Post> posts = isBlank(q)
+                ? postRepository.findAllByPublishedTrueOrderByCreatedAtDescIdDesc(pageable)
+                : postRepository.searchPublished(q.trim(), pageable);
+        return posts.map(PostResponse::from);
     }
 
     @Override
@@ -108,9 +110,8 @@ public class DefaultPostService implements PostService {
         postRepository.delete(findPost(id));
     }
 
-    /** 요약을 비워 보내면 본문에서 자동으로 만듭니다. */
-    private static boolean isBlank(String excerpt) {
-        return excerpt == null || excerpt.isBlank();
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private Post findPost(Long id) {

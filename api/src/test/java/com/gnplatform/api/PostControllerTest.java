@@ -1,6 +1,7 @@
 package com.gnplatform.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -76,11 +77,15 @@ class PostControllerTest {
     }
 
     private Long savePost(String title, String slug, boolean published) {
+        return savePostWithContent(title, slug, "본문", published);
+    }
+
+    private Long savePostWithContent(String title, String slug, String content, boolean published) {
         return postRepository.save(Post.builder()
                 .slug(slug)
                 .title(title)
                 .excerpt("요약")
-                .content("본문")
+                .content(content)
                 .author("관리자")
                 .published(published)
                 .build()).getId();
@@ -212,6 +217,47 @@ class PostControllerTest {
                 .andExpect(jsonPath("$.content[0].slug").value("발행-6"))
                 .andExpect(jsonPath("$.content[5].slug").value("발행-1"))
                 .andExpect(jsonPath("$.totalPages").value(2));
+    }
+
+    @Test
+    @DisplayName("q로 제목·본문을 검색하고 임시저장 글은 결과에서 빠진다")
+    void publicListIsSearchable() throws Exception {
+        savePost("냉동탑 온도가 안 내려갈 때", "냉동탑-온도", true);
+        savePostWithContent("윙바디 점검 요령", "윙바디-점검", "냉동탑 이야기가 본문에만 있습니다", true);
+        savePost("파워게이트 수리", "파워게이트-수리", true);
+        savePost("냉동탑 임시저장", "냉동탑-임시저장", false);
+
+        mockMvc.perform(get("/api/posts?q=냉동"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[*].slug",
+                        containsInAnyOrder("냉동탑-온도", "윙바디-점검")));
+    }
+
+    @Test
+    @DisplayName("검색 결과도 페이지로 나뉜다")
+    void searchIsPaged() throws Exception {
+        for (int i = 1; i <= 3; i++) {
+            savePost("냉동탑 " + i, "냉동탑-" + i, true);
+        }
+
+        mockMvc.perform(get("/api/posts?q=냉동탑&page=1&size=2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.totalElements").value(3))
+                .andExpect(jsonPath("$.totalPages").value(2));
+    }
+
+    @Test
+    @DisplayName("q가 비어 있으면 전체 목록과 같다")
+    void blankQueryFallsBackToFullList() throws Exception {
+        savePost("발행된 글", "발행된-글", true);
+        savePost("임시저장 글", "임시저장-글", false);
+
+        mockMvc.perform(get("/api/posts?q= "))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].slug").value("발행된-글"));
     }
 
     @Test

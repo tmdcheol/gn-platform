@@ -15,8 +15,8 @@ public interface PostService {
      */
     String generateUniqueSlug(String title);
 
-    /** 공개 목록 — 발행된 글만 최신순, 페이지 단위. */
-    Page<PostResponse> getPublishedPosts(Pageable pageable);
+    /** 공개 목록 — 발행된 글만 최신순, 페이지 단위. q가 있으면 제목·본문 검색. */
+    Page<PostResponse> getPublishedPosts(String q, Pageable pageable);
 
     /** 공개 상세 — 발행된 글만 슬러그로. 없으면 PostNotFoundException. */
     PostResponse getPublishedPostBySlug(String slug);

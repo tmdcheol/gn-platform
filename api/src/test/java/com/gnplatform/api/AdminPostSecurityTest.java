@@ -157,7 +157,7 @@ class AdminPostSecurityTest {
                 .andExpect(status().isUnauthorized());
 
         mockMvc.perform(get("/api/posts"))
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     @Test
@@ -185,7 +185,7 @@ class AdminPostSecurityTest {
                 .andExpect(jsonPath("$.message").value("접근 권한이 없습니다"));
 
         mockMvc.perform(get("/api/posts"))
-                .andExpect(jsonPath("$.length()").value(0));
+                .andExpect(jsonPath("$.content.length()").value(0));
     }
 
     @Test
