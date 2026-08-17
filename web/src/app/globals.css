@@ -273,7 +273,7 @@ body {
   }
 }
 
-/* 관리자 폼 입력칸. 공개 화면에는 폼이 없어 여기서만 씁니다. */
+/* 폼 입력칸. 관리자 폼과 /blog 검색창에서 씁니다. */
 @utility field {
   height: 3rem;
   padding-inline: 0.875rem;

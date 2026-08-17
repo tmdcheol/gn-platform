@@ -65,26 +65,47 @@ export function getReviews() {
 export const POSTS_TAG = "posts";
 const POSTS_REVALIDATE_SECONDS = 3600;
 
+/** 관련 글·최신 글처럼 목록을 통째로 훑는 자리에서 한 번에 받는 크기. */
 const POSTS_PAGE_SIZE = 100;
 
-type PostPage = { content: Post[]; totalPages: number };
+/** /blog 한 페이지에 보이는 글 수. */
+export const BLOG_PAGE_SIZE = 6;
 
-function readPostPage(page: number) {
-  return readOrNull<PostPage>(
-    `/api/posts?page=${page}&size=${POSTS_PAGE_SIZE}`,
-    { revalidate: POSTS_REVALIDATE_SECONDS, tags: [POSTS_TAG] },
-  );
+export type PostPage = {
+  content: Post[];
+  totalPages: number;
+  totalElements: number;
+};
+
+function readPostPage(page: number, size: number, q = "") {
+  const query = new URLSearchParams({ page: String(page), size: String(size) });
+  if (q) {
+    query.set("q", q);
+  }
+
+  return readOrNull<PostPage>(`/api/posts?${query}`, {
+    revalidate: POSTS_REVALIDATE_SECONDS,
+    tags: [POSTS_TAG],
+  });
 }
 
 /**
- * 글 목록. 태그 캐시라 정적으로 구워지고, 발행하면 무효화로 즉시 갈립니다.
+ * 글 목록 첫 페이지. 태그 캐시라 정적으로 구워지고, 발행하면 무효화로 즉시 갈립니다.
  *
- * 목록 API가 페이지로 응답합니다(T-39). 화면 페이지네이션은 T-41이라 지금은 첫 페이지만 씁니다.
- * 사이트맵처럼 전체가 필요한 곳은 getAllPosts를 쓰세요 — 여기서 잘린 글은 색인에서 빠집니다.
+ * 사이트맵처럼 전체가 필요한 곳은 getAllPosts를,
+ * /blog처럼 페이지·검색이 필요한 곳은 getPostPage를 쓰세요.
  */
 export async function getPosts(): Promise<Post[] | null> {
-  const page = await readPostPage(0);
+  const page = await readPostPage(0, POSTS_PAGE_SIZE);
   return page?.content ?? null;
+}
+
+/**
+ * /blog용 한 페이지. page는 0부터, q가 있으면 제목·본문 검색입니다(T-40).
+ * 총 페이지 수가 필요하므로 글 목록이 아니라 페이지 객체를 그대로 돌려줍니다.
+ */
+export function getPostPage(page: number, q = ""): Promise<PostPage | null> {
+  return readPostPage(page, BLOG_PAGE_SIZE, q);
 }
 
 /**
@@ -92,14 +113,14 @@ export async function getPosts(): Promise<Post[] | null> {
  * 사이트맵이 글 수에 따라 조용히 잘리면 그만큼 색인이 빠지므로, 상한을 두지 않습니다.
  */
 export async function getAllPosts(): Promise<Post[] | null> {
-  const first = await readPostPage(0);
+  const first = await readPostPage(0, POSTS_PAGE_SIZE);
   if (!first) {
     return null;
   }
 
   const rest = await Promise.all(
     Array.from({ length: Math.max(first.totalPages - 1, 0) }, (_, index) =>
-      readPostPage(index + 1),
+      readPostPage(index + 1, POSTS_PAGE_SIZE),
     ),
   );
 
