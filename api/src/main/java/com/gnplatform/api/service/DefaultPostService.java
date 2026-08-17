@@ -43,7 +43,7 @@ public class DefaultPostService implements PostService {
     public Page<PostResponse> getPublishedPosts(String q, Pageable pageable) {
         Page<Post> posts = isBlank(q)
                 ? postRepository.findAllByPublishedTrueOrderByCreatedAtDescIdDesc(pageable)
-                : postRepository.searchPublished(q.trim(), pageable);
+                : postRepository.searchPublished(escapeLike(q.trim()), pageable);
         return posts.map(PostResponse::from);
     }
 
@@ -108,6 +108,13 @@ public class DefaultPostService implements PostService {
     @Transactional
     public void delete(Long id) {
         postRepository.delete(findPost(id));
+    }
+
+    /** 검색어에 들어온 %·_는 와일드카드가 아니라 글자 그대로 찾습니다. */
+    private static String escapeLike(String q) {
+        return q.replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
     }
 
     private static boolean isBlank(String value) {

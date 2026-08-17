@@ -235,6 +235,37 @@ class PostControllerTest {
     }
 
     @Test
+    @DisplayName("검색어의 %와 _는 와일드카드가 아니라 글자로 찾는다")
+    void likeWildcardsAreEscaped() throws Exception {
+        savePost("냉동탑 온도", "냉동탑-온도", true);
+        savePost("할인 50% 이벤트", "할인-이벤트", true);
+
+        mockMvc.perform(get("/api/posts").param("q", "%"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].slug").value("할인-이벤트"));
+
+        mockMvc.perform(get("/api/posts").param("q", "_"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    @DisplayName("sort 파라미터가 들어와도 최신순 목록이 그대로 나온다")
+    void sortParameterIsIgnored() throws Exception {
+        savePost("먼저 쓴 글", "먼저-쓴-글", true);
+        savePost("나중에 쓴 글", "나중에-쓴-글", true);
+
+        mockMvc.perform(get("/api/posts?sort=title"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].slug").value("나중에-쓴-글"));
+
+        mockMvc.perform(get("/api/posts?q=글&sort=title"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].slug").value("나중에-쓴-글"));
+    }
+
+    @Test
     @DisplayName("검색 결과도 페이지로 나뉜다")
     void searchIsPaged() throws Exception {
         for (int i = 1; i <= 3; i++) {
