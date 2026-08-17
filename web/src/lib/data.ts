@@ -69,10 +69,15 @@ const POSTS_REVALIDATE_SECONDS = 3600;
  * 글 목록. 태그 캐시라 정적으로 구워지고, 발행하면 무효화로 즉시 갈립니다.
  */
 export async function getPosts(): Promise<Post[] | null> {
-  return readOrNull<Post[]>("/api/posts", {
-    revalidate: POSTS_REVALIDATE_SECONDS,
-    tags: [POSTS_TAG],
-  });
+  // 목록 API가 페이지로 응답합니다(T-39). 화면 페이지네이션은 T-41이라 지금은 한 번에 받아 풉니다.
+  const page = await readOrNull<{ content: Post[] }>(
+    "/api/posts?page=0&size=100",
+    {
+      revalidate: POSTS_REVALIDATE_SECONDS,
+      tags: [POSTS_TAG],
+    },
+  );
+  return page?.content ?? null;
 }
 
 /**

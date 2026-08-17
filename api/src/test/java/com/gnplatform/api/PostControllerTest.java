@@ -138,8 +138,8 @@ class PostControllerTest {
 
         mockMvc.perform(get("/api/posts"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].slug").value("발행된-글"));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].slug").value("발행된-글"));
 
         mockMvc.perform(get("/api/admin/posts").session(login()))
                 .andExpect(status().isOk())
@@ -172,8 +172,8 @@ class PostControllerTest {
         savePost("나중에 쓴 글", "나중에-쓴-글", true);
 
         mockMvc.perform(get("/api/posts"))
-                .andExpect(jsonPath("$[0].slug").value("나중에-쓴-글"))
-                .andExpect(jsonPath("$[1].slug").value("먼저-쓴-글"));
+                .andExpect(jsonPath("$.content[0].slug").value("나중에-쓴-글"))
+                .andExpect(jsonPath("$.content[1].slug").value("먼저-쓴-글"));
     }
 
     @Test
@@ -186,9 +186,32 @@ class PostControllerTest {
 
         for (int i = 0; i < 5; i++) {
             mockMvc.perform(get("/api/posts"))
-                    .andExpect(jsonPath("$[0].id").value(second.intValue()))
-                    .andExpect(jsonPath("$[1].id").value(first.intValue()));
+                    .andExpect(jsonPath("$.content[0].id").value(second.intValue()))
+                    .andExpect(jsonPath("$.content[1].id").value(first.intValue()));
         }
+    }
+
+    @Test
+    @DisplayName("공개 목록은 page·size로 나뉘고 임시저장 글은 개수에서 빠진다")
+    void publicListIsPaged() throws Exception {
+        for (int i = 1; i <= 12; i++) {
+            savePost("발행 " + i, "발행-" + i, true);
+        }
+        savePost("임시저장 글", "임시저장-글", false);
+
+        mockMvc.perform(get("/api/posts?page=0&size=6"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(6))
+                .andExpect(jsonPath("$.content[0].slug").value("발행-12"))
+                .andExpect(jsonPath("$.totalElements").value(12))
+                .andExpect(jsonPath("$.totalPages").value(2));
+
+        mockMvc.perform(get("/api/posts?page=1&size=6"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(6))
+                .andExpect(jsonPath("$.content[0].slug").value("발행-6"))
+                .andExpect(jsonPath("$.content[5].slug").value("발행-1"))
+                .andExpect(jsonPath("$.totalPages").value(2));
     }
 
     @Test

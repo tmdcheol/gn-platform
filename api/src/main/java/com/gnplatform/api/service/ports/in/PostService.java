@@ -2,6 +2,9 @@ package com.gnplatform.api.service.ports.in;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.gnplatform.api.dto.PostRequest;
 import com.gnplatform.api.dto.PostResponse;
 
@@ -12,8 +15,8 @@ public interface PostService {
      */
     String generateUniqueSlug(String title);
 
-    /** 공개 목록 — 발행된 글만 최신순. */
-    List<PostResponse> getPublishedPosts();
+    /** 공개 목록 — 발행된 글만 최신순, 페이지 단위. */
+    Page<PostResponse> getPublishedPosts(Pageable pageable);
 
     /** 공개 상세 — 발행된 글만 슬러그로. 없으면 PostNotFoundException. */
     PostResponse getPublishedPostBySlug(String slug);

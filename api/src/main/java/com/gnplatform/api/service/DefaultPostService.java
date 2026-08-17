@@ -2,6 +2,8 @@ package com.gnplatform.api.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,10 +40,9 @@ public class DefaultPostService implements PostService {
     }
 
     @Override
-    public List<PostResponse> getPublishedPosts() {
-        return postRepository.findAllByPublishedTrueOrderByCreatedAtDescIdDesc().stream()
-                .map(PostResponse::from)
-                .toList();
+    public Page<PostResponse> getPublishedPosts(Pageable pageable) {
+        return postRepository.findAllByPublishedTrueOrderByCreatedAtDescIdDesc(pageable)
+                .map(PostResponse::from);
     }
 
     @Override
